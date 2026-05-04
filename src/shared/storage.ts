@@ -97,8 +97,14 @@ export function normalizeConsentAnalysis(
   const categories = analysis.categories ?? [];
   const matches = analysis.matches ?? [];
   const sourceSnippets = analysis.sourceSnippets ?? matches.map((match) => match.snippet);
-  const importantPoints =
-    analysis.importantPoints ?? analysis.bullets ?? ["No meaningful consent block was found."];
+  const fallbackBullets = buildFallbackBullets(analysis);
+  const youMayBeAgreeingTo = normalizeBullets(
+    analysis.youMayBeAgreeingTo ?? analysis.importantPoints ?? analysis.bullets ?? fallbackBullets
+  );
+  const requiredBullets =
+    (analysis.detected ?? score > 0) && youMayBeAgreeingTo.length === 0
+      ? fallbackBullets
+      : youMayBeAgreeingTo;
   const summaryLine =
     analysis.summaryLine ??
     analysis.summary ??
@@ -116,13 +122,62 @@ export function normalizeConsentAnalysis(
     categories,
     summaryLine,
     summary: analysis.summary ?? summaryLine,
-    importantPoints,
-    bullets: analysis.bullets ?? importantPoints,
+    youMayBeAgreeingTo: requiredBullets,
+    importantPoints: requiredBullets,
+    bullets: analysis.bullets ?? requiredBullets,
     sourceSnippets,
     sourceText: analysis.sourceText ?? "",
     confidence: analysis.confidence ?? 0,
     matches
   };
+}
+
+function normalizeBullets(value: string[] | undefined): string[] {
+  return Array.isArray(value)
+    ? Array.from(new Set(value.map((item) => item.trim()).filter(Boolean))).slice(0, 7)
+    : [];
+}
+
+function buildFallbackBullets(analysis: Partial<ConsentAnalysis>): string[] {
+  const categories = new Set(analysis.categories ?? []);
+  const snippets = [
+    ...(analysis.sourceSnippets ?? []),
+    ...((analysis.matches ?? []).map((match) => `${match.phrase} ${match.snippet}`)),
+    analysis.sourceText ?? ""
+  ]
+    .join(" ")
+    .toLowerCase();
+  const bullets: string[] = [];
+
+  if (categories.has("Background Verification") || includesAny(snippets, ["verify", "background check"])) {
+    bullets.push("The company may verify information you submitted.");
+  }
+  if (includesAny(snippets, ["former employers", "educational institutions", "references", "schools"])) {
+    bullets.push("Former employers, schools, or references may be contacted.");
+  }
+  if (includesAny(snippets, ["without prior notice", "without notice"])) {
+    bullets.push("Information may be requested or released without prior notice to you.");
+  }
+  if (categories.has("Liability Waiver") || includesAny(snippets, ["release", "liability"])) {
+    bullets.push("You may be releasing the company or information providers from liability.");
+  }
+  if (categories.has("Employment Terms") || includesAny(snippets, ["at-will", "terminated at any time"])) {
+    bullets.push("If hired, employment may be at-will and can end at any time.");
+  }
+  if (includesAny(snippets, ["misstatement", "omission", "rejection", "termination"])) {
+    bullets.push("Incorrect or omitted information may lead to rejection or termination.");
+  }
+  if (categories.has("Data Sharing") || includesAny(snippets, ["third parties", "personal information"])) {
+    bullets.push("Your personal information may be shared with outside parties.");
+  }
+
+  return normalizeBullets(
+    bullets.length ? bullets : ["This may be standard language, but it is still meaningful consent."]
+  );
+}
+
+function includesAny(text: string, values: string[]): boolean {
+  return values.some((value) => text.includes(value));
 }
 
 function normalizeLegacyScore(score: number): number {

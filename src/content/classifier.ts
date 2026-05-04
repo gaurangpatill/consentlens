@@ -70,7 +70,7 @@ export class RuleBasedConsentAnalyzer implements ConsentAnalyzer {
     const categories = Array.from(new Set(matches.map((match) => match.category)));
     const score = scoreBlock(input, matches, categories);
     const riskLevel = getRiskLevel(score);
-    const importantPoints = buildImportantPoints(input, matches);
+    const youMayBeAgreeingTo = buildAgreementBullets(input, matches);
     const sourceSnippets = buildSourceSnippets(input, matches);
     const summaryLine = buildSummaryLine(input, categories, matches);
 
@@ -84,8 +84,9 @@ export class RuleBasedConsentAnalyzer implements ConsentAnalyzer {
       categories,
       summaryLine,
       summary: summaryLine,
-      importantPoints,
-      bullets: importantPoints,
+      youMayBeAgreeingTo,
+      importantPoints: youMayBeAgreeingTo,
+      bullets: youMayBeAgreeingTo,
       sourceSnippets,
       sourceText: input.text,
       confidence: calculateConfidence(input, matches),
@@ -127,8 +128,9 @@ export class LlmConsentAnalyzer implements ConsentAnalyzer {
         categories,
         summaryLine: payload.summaryLine,
         summary: payload.summaryLine,
-        importantPoints: payload.importantPoints,
-        bullets: payload.importantPoints,
+        youMayBeAgreeingTo: payload.youMayBeAgreeingTo,
+        importantPoints: payload.youMayBeAgreeingTo,
+        bullets: payload.youMayBeAgreeingTo,
         sourceSnippets: payload.sourceSnippets,
         sourceText: input.text,
         confidence: payload.confidence,
@@ -243,13 +245,13 @@ function buildSummaryLine(
   return "ConsentLens found agreement language worth reviewing before you continue.";
 }
 
-function buildImportantPoints(input: ConsentBlock, matches: ConsentFinding[]): string[] {
+function buildAgreementBullets(input: ConsentBlock, matches: ConsentFinding[]): string[] {
   const categories = new Set(matches.map((match) => match.category));
   const lower = input.text.toLowerCase();
   const points: string[] = [];
 
   if (categories.has("Background Verification") || includesAny(lower, ["verify", "background check"])) {
-    points.push("The company may verify statements or information you provided.");
+    points.push("The company can verify statements you made in your application.");
   }
 
   if (
@@ -261,11 +263,11 @@ function buildImportantPoints(input: ConsentBlock, matches: ConsentFinding[]): s
       "outside parties"
     ])
   ) {
-    points.push("Former employers, schools, references, or other outside parties may be contacted.");
+    points.push("Former employers, schools, references, and other outside parties may be contacted.");
   }
 
   if (includesAny(lower, ["without prior notice", "without notice"])) {
-    points.push("Those parties may provide or release information without giving you prior notice.");
+    points.push("Information may be requested or released without prior notice to you.");
   }
 
   if (categories.has("Data Sharing")) {
@@ -285,14 +287,37 @@ function buildImportantPoints(input: ConsentBlock, matches: ConsentFinding[]): s
   }
 
   if (categories.has("Employment Terms") || includesAny(lower, ["at-will", "terminated at any time"])) {
-    points.push("You may be acknowledging at-will employment terms if hired.");
+    points.push("If hired, your employment may be at-will and can end at any time.");
+  }
+
+  if (
+    includesAny(lower, [
+      "misstatement",
+      "misstatements",
+      "omission",
+      "omissions",
+      "false statement",
+      "falsification",
+      "rejection",
+      "termination"
+    ])
+  ) {
+    points.push("Incorrect or omitted information may lead to rejection or termination.");
   }
 
   if (categories.has("Privacy Tracking")) {
     points.push("Your activity or device information may be used for analytics or advertising.");
   }
 
-  points.push("This may be standard language, but it is still meaningful consent.");
+  if (points.length < 3) {
+    matches.slice(0, 4).forEach((match) => {
+      points.push(match.explanation);
+    });
+  }
+
+  if (points.length < 3) {
+    points.push("This may be standard language, but it is still meaningful consent.");
+  }
 
   return Array.from(new Set(points)).slice(0, 7).slice(0, Math.max(3, Math.min(7, points.length)));
 }
@@ -359,8 +384,9 @@ function normalizeComparable(value: string): string {
 function normalizeLlmResponse(
   response: Partial<LlmConsentResponse>
 ): LlmConsentResponse | undefined {
-  const importantPoints = Array.isArray(response.importantPoints)
-    ? response.importantPoints
+  const rawBullets = response.youMayBeAgreeingTo ?? response.importantPoints;
+  const youMayBeAgreeingTo = Array.isArray(rawBullets)
+    ? rawBullets
         .filter((point): point is string => typeof point === "string")
         .map((point) => point.trim())
         .filter(Boolean)
@@ -371,7 +397,7 @@ function normalizeLlmResponse(
     typeof response.score !== "number" ||
     !["low", "medium", "high"].includes(response.riskLevel ?? "") ||
     typeof response.summaryLine !== "string" ||
-    importantPoints.length < 3 ||
+    youMayBeAgreeingTo.length < 3 ||
     !Array.isArray(response.categories) ||
     !Array.isArray(response.sourceSnippets) ||
     typeof response.confidence !== "number"
@@ -383,7 +409,8 @@ function normalizeLlmResponse(
     score: clampRiskScore(response.score),
     riskLevel: getRiskLevel(clampRiskScore(response.score)),
     summaryLine: oneSentence(response.summaryLine),
-    importantPoints,
+    youMayBeAgreeingTo,
+    importantPoints: youMayBeAgreeingTo,
     categories: response.categories.filter((category): category is string => typeof category === "string"),
     sourceSnippets: response.sourceSnippets
       .filter((snippet): snippet is string => typeof snippet === "string")

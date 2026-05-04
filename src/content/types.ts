@@ -29,6 +29,7 @@ export type ConsentAnalysis = {
   categories: ConsentCategory[];
   summaryLine: string;
   summary: string;
+  youMayBeAgreeingTo: string[];
   importantPoints: string[];
   bullets: string[];
   sourceSnippets: string[];
@@ -41,6 +42,7 @@ export type LlmConsentResponse = {
   score: number;
   riskLevel: RiskLevel;
   summaryLine: string;
+  youMayBeAgreeingTo: string[];
   importantPoints: string[];
   categories: string[];
   sourceSnippets: string[];

@@ -131,25 +131,30 @@ function AnalysisView({
   onIgnoreSite: () => Promise<void>;
 }) {
   const [showMatches, setShowMatches] = useState(false);
-  const pointCount = analysis.importantPoints.length;
+  const agreementBullets = analysis.youMayBeAgreeingTo;
 
   return (
     <section className="panel">
-      <div className="score-row">
-        <div>
-          <p className="status-title">
-            {analysis.detected ? "Important terms found" : "No consent block found"}
-          </p>
-          <p className="summary-line">{analysis.summaryLine}</p>
-        </div>
+      <div className="summary-first">
+        <p className="popup-headline">
+          {analysis.detected ? "Here's what you may be agreeing to" : "No consent block found"}
+        </p>
         <span className={`score-badge ${analysis.riskLevel}`}>
           <strong>{analysis.score}</strong>
-          <span>/100</span>
+          <span>/100 risk</span>
         </span>
+        <p className="summary-line">{analysis.summaryLine}</p>
       </div>
 
+      <p className="points-title">You may be agreeing to:</p>
+      <ul className="bullet-list">
+        {agreementBullets.map((bullet) => (
+          <li key={bullet}>{bullet}</li>
+        ))}
+      </ul>
+
       {analysis.categories.length > 0 && (
-        <div className="chip-list">
+        <div className="chip-list secondary-details">
           {analysis.categories.map((category) => (
             <span className="chip" key={category}>
               {category}
@@ -157,13 +162,6 @@ function AnalysisView({
           ))}
         </div>
       )}
-
-      <p className="points-title">{pointCount} important points:</p>
-      <ul className="bullet-list">
-        {analysis.importantPoints.map((bullet) => (
-          <li key={bullet}>{bullet}</li>
-        ))}
-      </ul>
 
       {showMatches && (
         <>

@@ -122,6 +122,19 @@ input:focus-visible {
   justify-content: space-between;
 }
 
+.summary-first {
+  display: grid;
+  gap: 10px;
+}
+
+.popup-headline {
+  color: #24241f;
+  font-size: 18px;
+  font-weight: 820;
+  line-height: 1.2;
+  margin: 0;
+}
+
 .status-title {
   color: #24241f;
   font-size: 14px;
@@ -183,6 +196,7 @@ input:focus-visible {
   display: inline-flex;
   flex: 0 0 auto;
   gap: 2px;
+  justify-self: start;
   line-height: 1;
   padding: 9px 10px;
 }
@@ -230,10 +244,15 @@ input:focus-visible {
 
 .points-title {
   color: #24241f;
-  font-size: 13px;
-  font-weight: 760;
+  font-size: 14px;
+  font-weight: 800;
   line-height: 1.3;
   margin: 14px 0 0;
+}
+
+.secondary-details {
+  border-top: 1px solid #ebe6dc;
+  padding-top: 12px;
 }
 
 .bullet-list li {
