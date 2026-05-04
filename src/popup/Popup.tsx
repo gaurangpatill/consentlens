@@ -2,7 +2,7 @@ import { Eye, EyeOff, RotateCw, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ConsentAnalysis, ConsentMessage } from "../content/types";
 import { APP_NAME, TAGLINE } from "../shared/constants";
-import { getLastAnalysis } from "../shared/storage";
+import { getLastAnalysis, normalizeConsentAnalysis } from "../shared/storage";
 
 type PopupState =
   | { status: "loading" }
@@ -30,9 +30,15 @@ export function Popup() {
     }
 
     try {
-      const analysis = await sendTabMessage<ConsentAnalysis>(tab.id, {
-        type: "CONSENTLENS_GET_ANALYSIS"
-      });
+      const analysis = normalizeConsentAnalysis(
+        await sendTabMessage<Partial<ConsentAnalysis>>(tab.id, {
+          type: "CONSENTLENS_GET_ANALYSIS"
+        })
+      );
+      if (!analysis) {
+        setState({ status: "unsupported", message: "Refresh this page to start scanning." });
+        return;
+      }
       setState({ status: "ready", analysis, activeTabId: tab.id });
     } catch {
       const fallback = await getLastAnalysis();
@@ -47,9 +53,15 @@ export function Popup() {
   async function rescan(): Promise<void> {
     if (state.status !== "ready" || !state.activeTabId) return;
     setState({ status: "loading" });
-    const analysis = await sendTabMessage<ConsentAnalysis>(state.activeTabId, {
-      type: "CONSENTLENS_RESCAN"
-    });
+    const analysis = normalizeConsentAnalysis(
+      await sendTabMessage<Partial<ConsentAnalysis>>(state.activeTabId, {
+        type: "CONSENTLENS_RESCAN"
+      })
+    );
+    if (!analysis) {
+      setState({ status: "unsupported", message: "Refresh this page to start scanning." });
+      return;
+    }
     setState({ status: "ready", analysis, activeTabId: state.activeTabId });
   }
 
