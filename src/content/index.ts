@@ -1,10 +1,10 @@
-import { scanVisibleText } from "./domScanner";
-import { RuleBasedConsentClassifier } from "./classifier";
+import { extractConsentBlocks } from "./domScanner";
+import { LlmConsentAnalyzer, RuleBasedConsentAnalyzer } from "./classifier";
 import { ConsentLensOverlay } from "./overlay";
 import type { ConsentAnalysis, ConsentMessage } from "./types";
 import { getSettings, ignoreDomain, isDomainIgnored, setLastAnalysis } from "../shared/storage";
 
-const classifier = new RuleBasedConsentClassifier();
+const analyzer = __USE_LLM_ANALYZER__ ? new LlmConsentAnalyzer() : new RuleBasedConsentAnalyzer();
 const overlay = new ConsentLensOverlay();
 let currentAnalysis: ConsentAnalysis | undefined;
 let dismissedForUrl: string | undefined;
@@ -31,12 +31,15 @@ async function runScan(): Promise<ConsentAnalysis | undefined> {
   }
 
   const settings = await getSettings();
-  const chunks = scanVisibleText();
-  currentAnalysis = classifier.analyze(chunks, {
+  const blocks = extractConsentBlocks(document.body, {
     pageUrl: window.location.href,
     domain,
     enabledCategories: settings.enabledCategories
   });
+
+  currentAnalysis = blocks.length
+    ? await analyzer.analyze(blocks[0])
+    : buildEmptyAnalysis(domain);
 
   await setLastAnalysis(currentAnalysis);
 
@@ -121,10 +124,16 @@ function buildEmptyAnalysis(domain: string): ConsentAnalysis {
     domain,
     detected: false,
     riskLevel: "low",
+    score: 0,
     totalScore: 0,
     categories: [],
+    summaryLine: "No meaningful consent block was found in the visible page text.",
     summary: "No important consent terms were detected on the visible page.",
+    importantPoints: ["No meaningful consent block was found in the visible page text."],
     bullets: ["No notable agreement language was found in visible page text."],
+    sourceSnippets: [],
+    sourceText: "",
+    confidence: 0,
     matches: []
   };
 }

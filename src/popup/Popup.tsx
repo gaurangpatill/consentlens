@@ -1,4 +1,4 @@
-import { AlertTriangle, EyeOff, RotateCw, Settings } from "lucide-react";
+import { Eye, EyeOff, RotateCw, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ConsentAnalysis, ConsentMessage } from "../content/types";
 import { APP_NAME, TAGLINE } from "../shared/constants";
@@ -119,16 +119,22 @@ function AnalysisView({
   onIgnoreSite: () => Promise<void>;
 }) {
   const [showMatches, setShowMatches] = useState(false);
+  const pointCount = analysis.importantPoints.length;
 
   return (
     <section className="panel">
-      <div className="status-row">
-        <p className="status-title">
-          {analysis.detected ? "Important terms detected" : "No important terms detected"}
-        </p>
-        <span className={`risk-pill ${analysis.riskLevel}`}>{capitalize(analysis.riskLevel)}</span>
+      <div className="score-row">
+        <div>
+          <p className="status-title">
+            {analysis.detected ? "Important terms found" : "No consent block found"}
+          </p>
+          <p className="summary-line">{analysis.summaryLine}</p>
+        </div>
+        <span className={`score-badge ${analysis.riskLevel}`}>
+          <strong>{analysis.score}</strong>
+          <span>/100</span>
+        </span>
       </div>
-      <p className="muted">{analysis.summary}</p>
 
       {analysis.categories.length > 0 && (
         <div className="chip-list">
@@ -140,21 +146,29 @@ function AnalysisView({
         </div>
       )}
 
+      <p className="points-title">{pointCount} important points:</p>
       <ul className="bullet-list">
-        {analysis.bullets.map((bullet) => (
+        {analysis.importantPoints.map((bullet) => (
           <li key={bullet}>{bullet}</li>
         ))}
       </ul>
 
       {showMatches && (
-        <div className="match-list">
-          {analysis.matches.map((match) => (
-            <article className="match" key={`${match.category}-${match.phrase}-${match.snippet}`}>
-              <strong>{match.phrase}</strong>
-              <p>{match.snippet}</p>
-            </article>
-          ))}
-        </div>
+        <>
+          <div className="match-list">
+            {analysis.sourceSnippets.map((snippet) => (
+              <article className="match" key={snippet}>
+                <p>{snippet}</p>
+              </article>
+            ))}
+          </div>
+          {analysis.sourceText && (
+            <details className="source-details">
+              <summary>View full source text</summary>
+              <p>{analysis.sourceText}</p>
+            </details>
+          )}
+        </>
       )}
 
       <div className="actions">
@@ -162,10 +176,10 @@ function AnalysisView({
           className="secondary-button"
           type="button"
           onClick={() => setShowMatches((value) => !value)}
-          disabled={!analysis.matches.length}
+          disabled={!analysis.sourceSnippets.length && !analysis.sourceText}
         >
-          <AlertTriangle size={15} />
-          {showMatches ? "Hide details" : "Show details"}
+          <Eye size={15} />
+          {showMatches ? "Hide source" : "View source text"}
         </button>
         <button className="secondary-button" type="button" onClick={onRescan}>
           <RotateCw size={15} />
@@ -187,8 +201,4 @@ async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
 
 function sendTabMessage<T>(tabId: number, message: ConsentMessage): Promise<T> {
   return chrome.tabs.sendMessage(tabId, message) as Promise<T>;
-}
-
-function capitalize(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }

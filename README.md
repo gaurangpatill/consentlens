@@ -17,17 +17,19 @@ It does not provide legal advice. It simply helps users slow down and understand
 
 ## What V1 Does
 
-ConsentLens scans visible page text, with extra attention to forms, labels, dialog text, and text near submit, apply, continue, checkout, and payment buttons.
+ConsentLens scans visible page text, extracts meaningful consent blocks, and then analyzes the full block instead of only looking for isolated keywords. It gives extra attention to forms, labels, checkboxes, dialog text, and text near submit, apply, continue, checkout, and payment buttons.
 
 When important terms are detected, it shows a small floating warning card with:
 
-- risk level: Low, Medium, or High
+- a 1-100 risk score
+- green, yellow, or red risk color
 - category chips
-- short plain-English bullets
-- original phrase snippets
+- a one-line plain-English summary
+- 3-7 important points
+- source snippets and expandable source text
 - actions to show details, dismiss, or ignore the site
 
-V1 is fully local and rules-based. It does not call an LLM or backend service.
+V1 is fully local and rules-based by default. The analyzer is pluggable so an optional LLM explanation layer can be enabled later without changing the scanner or UI.
 
 ## Detection Categories
 
@@ -62,7 +64,15 @@ src/
     constants.ts
 ```
 
-The classifier uses a pluggable interface so an optional AI explanation layer can be added later without replacing DOM scanning, scoring, popup, options, or storage.
+The analyzer uses this pluggable interface:
+
+```ts
+interface ConsentAnalyzer {
+  analyze(input: ConsentBlock): Promise<ConsentAnalysis>;
+}
+```
+
+Set `USE_LLM_ANALYZER=true` at build time to select the optional LLM analyzer. If no `LLM_ANALYZER_ENDPOINT` is configured, ConsentLens falls back to the local rules-based analyzer. When an endpoint is configured, the LLM analyzer sends only the extracted consent block text, not the whole page or form values.
 
 ## Install
 

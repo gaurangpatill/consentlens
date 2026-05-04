@@ -24,11 +24,27 @@ export type ConsentAnalysis = {
   domain: string;
   detected: boolean;
   riskLevel: RiskLevel;
+  score: number;
   totalScore: number;
   categories: ConsentCategory[];
+  summaryLine: string;
   summary: string;
+  importantPoints: string[];
   bullets: string[];
+  sourceSnippets: string[];
+  sourceText: string;
+  confidence: number;
   matches: ConsentFinding[];
+};
+
+export type LlmConsentResponse = {
+  score: number;
+  riskLevel: RiskLevel;
+  summaryLine: string;
+  importantPoints: string[];
+  categories: string[];
+  sourceSnippets: string[];
+  confidence: number;
 };
 
 export type TextChunk = {
@@ -36,6 +52,18 @@ export type TextChunk = {
   text: string;
   source: "form" | "button-adjacent" | "dialog" | "page";
   priority: number;
+};
+
+export type ConsentBlock = {
+  id: string;
+  text: string;
+  source: TextChunk["source"] | "checkbox-adjacent";
+  priority: number;
+  markerCount: number;
+  markers: string[];
+  pageUrl: string;
+  domain: string;
+  enabledCategories: ConsentCategory[];
 };
 
 export type PatternRule = {
@@ -51,8 +79,8 @@ export type ClassifierContext = {
   enabledCategories: ConsentCategory[];
 };
 
-export interface ConsentClassifier {
-  analyze(chunks: TextChunk[], context: ClassifierContext): ConsentAnalysis;
+export interface ConsentAnalyzer {
+  analyze(input: ConsentBlock): Promise<ConsentAnalysis>;
 }
 
 export type ConsentMessage =

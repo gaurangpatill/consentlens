@@ -1,4 +1,4 @@
-import type { ConsentAnalysis, ConsentFinding } from "./types";
+import type { ConsentAnalysis } from "./types";
 
 type OverlayCallbacks = {
   onDismiss: () => void;
@@ -37,7 +37,7 @@ export class ConsentLensOverlay {
   private createCard(analysis: ConsentAnalysis, callbacks: OverlayCallbacks): HTMLElement {
     const card = document.createElement("section");
     card.className = `card risk-${analysis.riskLevel}`;
-    card.setAttribute("aria-label", "ConsentLens detected important terms");
+    card.setAttribute("aria-label", "ConsentLens found important terms");
 
     const header = document.createElement("div");
     header.className = "header";
@@ -47,13 +47,17 @@ export class ConsentLensOverlay {
     eyebrow.className = "eyebrow";
     eyebrow.textContent = "ConsentLens";
     const title = document.createElement("h2");
-    title.textContent = "ConsentLens detected important terms";
+    title.textContent = "ConsentLens found important terms";
     titleGroup.append(eyebrow, title);
 
     const risk = document.createElement("span");
     risk.className = "risk";
-    risk.textContent = `${capitalize(analysis.riskLevel)} risk`;
+    risk.textContent = `${analysis.score}/100`;
     header.append(titleGroup, risk);
+
+    const summary = document.createElement("p");
+    summary.className = "summary";
+    summary.textContent = analysis.summaryLine;
 
     const chips = document.createElement("div");
     chips.className = "chips";
@@ -65,7 +69,7 @@ export class ConsentLensOverlay {
 
     const bullets = document.createElement("ul");
     bullets.className = "bullets";
-    analysis.bullets.slice(0, 4).forEach((bulletText) => {
+    analysis.importantPoints.slice(0, 4).forEach((bulletText) => {
       const bullet = document.createElement("li");
       bullet.textContent = bulletText;
       bullets.appendChild(bullet);
@@ -73,17 +77,19 @@ export class ConsentLensOverlay {
 
     const snippets = document.createElement("div");
     snippets.className = "snippets";
-    analysis.matches.slice(0, this.expanded ? 6 : 2).forEach((match) => {
-      snippets.appendChild(this.createSnippet(match));
-    });
+    if (this.expanded) {
+      analysis.sourceSnippets.slice(0, 5).forEach((snippetText) => {
+        snippets.appendChild(this.createSnippet(snippetText));
+      });
+    }
 
     const actions = document.createElement("div");
     actions.className = "actions";
 
     const details = document.createElement("button");
     details.type = "button";
-    details.className = "secondary";
-    details.textContent = this.expanded ? "Hide details" : "Show details";
+    details.className = "primary";
+    details.textContent = this.expanded ? "Hide" : "Review";
     details.addEventListener("click", () => {
       this.expanded = !this.expanded;
       this.show(analysis, callbacks);
@@ -102,21 +108,22 @@ export class ConsentLensOverlay {
     ignore.addEventListener("click", callbacks.onIgnoreSite);
 
     actions.append(details, dismiss, ignore);
-    card.append(header, chips, bullets, snippets, actions);
+    card.append(header, summary, chips);
+    if (this.expanded) {
+      card.append(bullets, snippets);
+    }
+    card.append(actions);
     return card;
   }
 
-  private createSnippet(match: ConsentFinding): HTMLElement {
+  private createSnippet(snippetText: string): HTMLElement {
     const snippet = document.createElement("div");
     snippet.className = "snippet";
 
-    const phrase = document.createElement("strong");
-    phrase.textContent = match.phrase;
-
     const text = document.createElement("p");
-    text.textContent = match.snippet;
+    text.textContent = snippetText;
 
-    snippet.append(phrase, text);
+    snippet.append(text);
     return snippet;
   }
 
@@ -142,7 +149,7 @@ export class ConsentLensOverlay {
         width: min(390px, calc(100vw - 28px));
         background: #fbfaf7;
         border: 1px solid #d8d2c7;
-        border-top: 4px solid #6f7f6a;
+        border-top: 4px solid #2f7d4f;
         border-radius: 8px;
         box-shadow: 0 18px 50px rgba(24, 24, 21, 0.18);
         padding: 16px;
@@ -150,7 +157,7 @@ export class ConsentLensOverlay {
       }
 
       .risk-medium {
-        border-top-color: #b7791f;
+        border-top-color: #c08a1e;
       }
 
       .risk-high {
@@ -184,13 +191,33 @@ export class ConsentLensOverlay {
 
       .risk {
         flex: 0 0 auto;
-        border: 1px solid #d6d0c3;
-        border-radius: 999px;
-        color: #37352f;
-        font-size: 12px;
-        font-weight: 700;
-        padding: 5px 8px;
-        background: #ffffff;
+        border: 1px solid #c6decf;
+        border-radius: 8px;
+        color: #245b38;
+        font-size: 17px;
+        font-weight: 820;
+        line-height: 1;
+        padding: 8px 9px;
+        background: #eaf5ed;
+      }
+
+      .risk-medium .risk {
+        background: #fff4d8;
+        border-color: #edd089;
+        color: #7a4a09;
+      }
+
+      .risk-high .risk {
+        background: #fae7e2;
+        border-color: #ecc2b8;
+        color: #8b3428;
+      }
+
+      .summary {
+        color: #34322c;
+        font-size: 13px;
+        line-height: 1.4;
+        margin: 0 0 12px;
       }
 
       .chips {
@@ -238,14 +265,6 @@ export class ConsentLensOverlay {
         padding: 9px 10px;
       }
 
-      .snippet strong {
-        color: #2f3d2b;
-        display: block;
-        font-size: 12px;
-        line-height: 1.2;
-        margin-bottom: 4px;
-      }
-
       .snippet p {
         color: #555147;
         font-size: 12px;
@@ -286,9 +305,19 @@ export class ConsentLensOverlay {
       }
 
       .primary {
-        background: #2f3d2b;
-        border-color: #2f3d2b;
+        background: #245b38;
+        border-color: #245b38;
         color: #ffffff;
+      }
+
+      .risk-medium .primary {
+        background: #7a4a09;
+        border-color: #7a4a09;
+      }
+
+      .risk-high .primary {
+        background: #8b3428;
+        border-color: #8b3428;
       }
 
       @media (max-width: 420px) {
@@ -313,8 +342,4 @@ export class ConsentLensOverlay {
     `;
     return style;
   }
-}
-
-function capitalize(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }

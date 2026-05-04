@@ -24,3 +24,23 @@ export const DETECTION_THRESHOLD = 3;
 export const MAX_MATCHES = 8;
 export const CHUNK_MIN_LENGTH = 500;
 export const CHUNK_MAX_LENGTH = 1200;
+export const CONSENT_BLOCK_MIN_LENGTH = 300;
+export const CONSENT_MARKERS = [
+  "I authorize",
+  "I consent",
+  "I agree",
+  "I acknowledge",
+  "I understand",
+  "I release",
+  "I waive",
+  "without notice",
+  "liability",
+  "verify",
+  "background check",
+  "at-will",
+  "terminated at any time",
+  "terms",
+  "privacy",
+  "arbitration",
+  "auto-renew"
+];

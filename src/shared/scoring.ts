@@ -7,8 +7,8 @@ export const SCORE: Record<RiskLevel, number> = {
 };
 
 export function getRiskLevel(score: number): RiskLevel {
-  if (score >= 8) return "high";
-  if (score >= 4) return "medium";
+  if (score >= 70) return "high";
+  if (score >= 40) return "medium";
   return "low";
 }
 
@@ -17,6 +17,10 @@ export function calculateScore(matches: ConsentFinding[]): number {
   const base = matches.reduce((sum, match) => sum + match.score, 0);
   const categoryBonus = Math.max(0, categories.size - 1);
   return base + categoryBonus;
+}
+
+export function clampRiskScore(score: number): number {
+  return Math.max(1, Math.min(100, Math.round(score)));
 }
 
 export function buildSummary(analysis: Pick<ConsentAnalysis, "riskLevel" | "categories">): string {
