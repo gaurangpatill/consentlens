@@ -1,5 +1,6 @@
 import { CONSENT_PATTERNS } from "../shared/patterns";
 import { clampRiskScore, getRiskLevel, SCORE } from "../shared/scoring";
+import { buildFallbackClauseBullets, summarizeClauses } from "./clauseSummarizer";
 import type {
   ConsentAnalysis,
   ConsentAnalyzer,
@@ -17,21 +18,16 @@ type CategorySignal = {
   severity: RiskLevel;
   phrases: string[];
   explanation: string;
-  point: string;
 };
 
 const BLOCK_SIGNALS: CategorySignal[] = [
-  ...CONSENT_PATTERNS.map((rule) => ({
-    ...rule,
-    point: pointForCategory(rule.category)
-  })),
+  ...CONSENT_PATTERNS,
   {
     category: "Background Verification",
     severity: "high",
     phrases: ["verify", "investigate", "screening", "employment history", "education history"],
     explanation:
-      "You may be authorizing verification of personal, employment, or education information.",
-    point: "The company may verify statements or information you provided."
+      "You may be authorizing verification of personal, employment, or education information."
   },
   {
     category: "Data Sharing",
@@ -44,23 +40,20 @@ const BLOCK_SIGNALS: CategorySignal[] = [
       "consumer report",
       "outside parties"
     ],
-    explanation: "Information may be requested from or shared with outside parties.",
-    point: "Outside parties may be asked to provide or release information about you."
+    explanation: "Information may be requested from or shared with outside parties."
   },
   {
     category: "Liability Waiver",
     severity: "high",
     phrases: ["release", "liability", "claims", "damages", "hold harmless"],
     explanation:
-      "You may be releasing one or more parties from responsibility for certain outcomes.",
-    point: "You may be releasing the company or information providers from certain liability."
+      "You may be releasing one or more parties from responsibility for certain outcomes."
   },
   {
     category: "Employment Terms",
     severity: "medium",
     phrases: ["I understand", "employment", "if hired", "at will", "at-will"],
-    explanation: "You may be acknowledging employment terms connected to the application.",
-    point: "You may be acknowledging employment terms that apply if you are hired."
+    explanation: "You may be acknowledging employment terms connected to the application."
   }
 ];
 
@@ -68,11 +61,18 @@ export class RuleBasedConsentAnalyzer implements ConsentAnalyzer {
   async analyze(input: ConsentBlock): Promise<ConsentAnalysis> {
     const matches = dedupeMatches(findMatches(input));
     const categories = Array.from(new Set(matches.map((match) => match.category)));
-    const score = scoreBlock(input, matches, categories);
+    const clauseSummary = summarizeClauses(input.text);
+    const fallbackBullets = buildFallbackClauseBullets(input.text);
+    const fallbackBulletsUsed = clauseSummary.bullets.length === 0 && fallbackBullets.length > 0;
+    const youMayBeAgreeingTo = clauseSummary.bullets.length ? clauseSummary.bullets : fallbackBullets;
+    const score = clauseSummary.matchedTriggerPhrases.length
+      ? clauseSummary.score
+      : scoreBlock(input, matches, categories);
     const riskLevel = getRiskLevel(score);
-    const youMayBeAgreeingTo = buildAgreementBullets(input, matches);
-    const sourceSnippets = buildSourceSnippets(input, matches);
-    const summaryLine = buildSummaryLine(input, categories, matches);
+    const sourceSnippets = buildSourceSnippets(input, matches, clauseSummary.matchedTriggerPhrases);
+    const summaryLine = clauseSummary.matchedTriggerPhrases.length
+      ? clauseSummary.summaryLine
+      : buildSummaryLine(input, categories, matches);
 
     return {
       pageUrl: input.pageUrl,
@@ -90,7 +90,8 @@ export class RuleBasedConsentAnalyzer implements ConsentAnalyzer {
       sourceSnippets,
       sourceText: input.text,
       confidence: calculateConfidence(input, matches),
-      matches
+      matches,
+      debug: buildDebug(input, "local", clauseSummary.matchedTriggerPhrases, fallbackBulletsUsed)
     };
   }
 }
@@ -117,6 +118,7 @@ export class LlmConsentAnalyzer implements ConsentAnalyzer {
       if (!payload) return fallback.analyze(input);
 
       const categories = payload.categories.filter(isConsentCategory);
+      const clauseSummary = summarizeClauses(input.text);
 
       return {
         pageUrl: input.pageUrl,
@@ -134,7 +136,8 @@ export class LlmConsentAnalyzer implements ConsentAnalyzer {
         sourceSnippets: payload.sourceSnippets,
         sourceText: input.text,
         confidence: payload.confidence,
-        matches: []
+        matches: [],
+        debug: buildDebug(input, "llm", clauseSummary.matchedTriggerPhrases, false)
       };
     } catch {
       return fallback.analyze(input);
@@ -245,85 +248,18 @@ function buildSummaryLine(
   return "ConsentLens found agreement language worth reviewing before you continue.";
 }
 
-function buildAgreementBullets(input: ConsentBlock, matches: ConsentFinding[]): string[] {
-  const categories = new Set(matches.map((match) => match.category));
-  const lower = input.text.toLowerCase();
-  const points: string[] = [];
-
-  if (categories.has("Background Verification") || includesAny(lower, ["verify", "background check"])) {
-    points.push("The company can verify statements you made in your application.");
-  }
-
-  if (
-    includesAny(lower, [
-      "former employers",
-      "educational institutions",
-      "references",
-      "schools",
-      "outside parties"
-    ])
-  ) {
-    points.push("Former employers, schools, references, and other outside parties may be contacted.");
-  }
-
-  if (includesAny(lower, ["without prior notice", "without notice"])) {
-    points.push("Information may be requested or released without prior notice to you.");
-  }
-
-  if (categories.has("Data Sharing")) {
-    points.push("Your personal information may be shared with outside parties.");
-  }
-
-  if (categories.has("Liability Waiver") || includesAny(lower, ["release", "liability"])) {
-    points.push("You may be releasing the company or information providers from certain liability.");
-  }
-
-  if (categories.has("Legal Rights")) {
-    points.push("You may be agreeing to limits on how disputes can be handled.");
-  }
-
-  if (categories.has("Financial Commitment")) {
-    points.push("You may be agreeing to renewal, payment, refund, or cancellation conditions.");
-  }
-
-  if (categories.has("Employment Terms") || includesAny(lower, ["at-will", "terminated at any time"])) {
-    points.push("If hired, your employment may be at-will and can end at any time.");
-  }
-
-  if (
-    includesAny(lower, [
-      "misstatement",
-      "misstatements",
-      "omission",
-      "omissions",
-      "false statement",
-      "falsification",
-      "rejection",
-      "termination"
-    ])
-  ) {
-    points.push("Incorrect or omitted information may lead to rejection or termination.");
-  }
-
-  if (categories.has("Privacy Tracking")) {
-    points.push("Your activity or device information may be used for analytics or advertising.");
-  }
-
-  if (points.length < 3) {
-    matches.slice(0, 4).forEach((match) => {
-      points.push(match.explanation);
-    });
-  }
-
-  if (points.length < 3) {
-    points.push("This may be standard language, but it is still meaningful consent.");
-  }
-
-  return Array.from(new Set(points)).slice(0, 7).slice(0, Math.max(3, Math.min(7, points.length)));
-}
-
-function buildSourceSnippets(input: ConsentBlock, matches: ConsentFinding[]): string[] {
-  const snippets = matches.map((match) => match.snippet);
+function buildSourceSnippets(
+  input: ConsentBlock,
+  matches: ConsentFinding[],
+  matchedTriggerPhrases: string[]
+): string[] {
+  const triggerSnippets = matchedTriggerPhrases
+    .map((trigger) => {
+      const index = input.text.toLowerCase().indexOf(trigger.toLowerCase());
+      return index >= 0 ? buildSnippet(input.text, index, trigger.length) : "";
+    })
+    .filter(Boolean);
+  const snippets = [...triggerSnippets, ...matches.map((match) => match.snippet)];
 
   if (!snippets.length) {
     return splitIntoSentences(input.text)
@@ -381,6 +317,22 @@ function normalizeComparable(value: string): string {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function buildDebug(
+  input: ConsentBlock,
+  analyzerUsed: "local" | "llm",
+  matchedTriggerPhrases: string[],
+  fallbackBulletsUsed: boolean
+) {
+  return {
+    extractedTextLength: input.text.length,
+    extractedTextPreview: input.text.slice(0, 500),
+    matchedTriggerPhrases,
+    sourceElement: input.sourceElement,
+    analyzerUsed,
+    fallbackBulletsUsed
+  };
+}
+
 function normalizeLlmResponse(
   response: Partial<LlmConsentResponse>
 ): LlmConsentResponse | undefined {
@@ -429,25 +381,4 @@ function oneSentence(value: string): string {
 
 function isConsentCategory(category: string): category is ConsentCategory {
   return ALL_CATEGORIES.includes(category as ConsentCategory);
-}
-
-function pointForCategory(category: ConsentCategory): string {
-  switch (category) {
-    case "Background Verification":
-      return "The company may verify statements or information you provided.";
-    case "Data Sharing":
-      return "Your personal information may be shared with outside parties.";
-    case "Liability Waiver":
-      return "You may be releasing another party from certain liability.";
-    case "Legal Rights":
-      return "You may be agreeing to limits on dispute handling.";
-    case "Employment Terms":
-      return "You may be acknowledging employment terms if hired.";
-    case "Financial Commitment":
-      return "You may be agreeing to renewal, payment, refund, or cancellation terms.";
-    case "Privacy Tracking":
-      return "Your activity or device information may be used for analytics or advertising.";
-    case "General Consent":
-      return "You may be confirming agreement to terms or policies.";
-  }
 }

@@ -36,6 +36,20 @@ export type ConsentAnalysis = {
   sourceText: string;
   confidence: number;
   matches: ConsentFinding[];
+  debug: ConsentAnalysisDebug;
+};
+
+export type ConsentAnalysisDebug = {
+  extractedTextLength: number;
+  extractedTextPreview: string;
+  matchedTriggerPhrases: string[];
+  sourceElement: {
+    tagName: string;
+    className: string;
+    id: string;
+  };
+  analyzerUsed: "local" | "llm";
+  fallbackBulletsUsed: boolean;
 };
 
 export type LlmConsentResponse = {
@@ -63,6 +77,11 @@ export type ConsentBlock = {
   priority: number;
   markerCount: number;
   markers: string[];
+  sourceElement: {
+    tagName: string;
+    className: string;
+    id: string;
+  };
   pageUrl: string;
   domain: string;
   enabledCategories: ConsentCategory[];

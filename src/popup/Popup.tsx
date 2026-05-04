@@ -181,6 +181,42 @@ function AnalysisView({
         </>
       )}
 
+      <details className="debug-details">
+        <summary>Debug extraction</summary>
+        <dl>
+          <div>
+            <dt>extractedTextLength</dt>
+            <dd>{analysis.debug.extractedTextLength}</dd>
+          </div>
+          <div>
+            <dt>extracted text preview</dt>
+            <dd>{analysis.debug.extractedTextPreview || "None"}</dd>
+          </div>
+          <div>
+            <dt>matched trigger phrases</dt>
+            <dd>{analysis.debug.matchedTriggerPhrases.join(", ") || "None"}</dd>
+          </div>
+          <div>
+            <dt>source element</dt>
+            <dd>
+              {formatSourceElement(
+                analysis.debug.sourceElement.tagName,
+                analysis.debug.sourceElement.className,
+                analysis.debug.sourceElement.id
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>analyzer used</dt>
+            <dd>{analysis.debug.analyzerUsed}</dd>
+          </div>
+          <div>
+            <dt>fallback bullets used</dt>
+            <dd>{analysis.debug.fallbackBulletsUsed ? "yes" : "no"}</dd>
+          </div>
+        </dl>
+      </details>
+
       <div className="actions">
         <button
           className="secondary-button"
@@ -211,4 +247,16 @@ async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
 
 function sendTabMessage<T>(tabId: number, message: ConsentMessage): Promise<T> {
   return chrome.tabs.sendMessage(tabId, message) as Promise<T>;
+}
+
+function formatSourceElement(tagName: string, className: string, id: string): string {
+  const idPart = id ? `#${id}` : "";
+  const classPart = className
+    ? `.${className
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 4)
+        .join(".")}`
+    : "";
+  return `${tagName || "unknown"}${idPart}${classPart}`;
 }

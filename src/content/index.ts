@@ -135,7 +135,19 @@ function buildEmptyAnalysis(domain: string): ConsentAnalysis {
     sourceSnippets: [],
     sourceText: "",
     confidence: 0,
-    matches: []
+    matches: [],
+    debug: {
+      extractedTextLength: 0,
+      extractedTextPreview: "",
+      matchedTriggerPhrases: [],
+      sourceElement: {
+        tagName: "",
+        className: "",
+        id: ""
+      },
+      analyzerUsed: __USE_LLM_ANALYZER__ ? "llm" : "local",
+      fallbackBulletsUsed: false
+    }
   };
 }
 

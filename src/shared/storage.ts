@@ -128,7 +128,23 @@ export function normalizeConsentAnalysis(
     sourceSnippets,
     sourceText: analysis.sourceText ?? "",
     confidence: analysis.confidence ?? 0,
-    matches
+    matches,
+    debug: {
+      extractedTextLength:
+        analysis.debug?.extractedTextLength ?? analysis.sourceText?.length ?? 0,
+      extractedTextPreview:
+        analysis.debug?.extractedTextPreview ?? analysis.sourceText?.slice(0, 500) ?? "",
+      matchedTriggerPhrases:
+        analysis.debug?.matchedTriggerPhrases ??
+        Array.from(new Set(matches.map((match) => match.phrase))).slice(0, 12),
+      sourceElement: analysis.debug?.sourceElement ?? {
+        tagName: "",
+        className: "",
+        id: ""
+      },
+      analyzerUsed: analysis.debug?.analyzerUsed ?? "local",
+      fallbackBulletsUsed: analysis.debug?.fallbackBulletsUsed ?? requiredBullets.length === 0
+    }
   };
 }
 
@@ -148,32 +164,56 @@ function buildFallbackBullets(analysis: Partial<ConsentAnalysis>): string[] {
     .join(" ")
     .toLowerCase();
   const bullets: string[] = [];
+  const extractedTextLength = analysis.sourceText?.trim().length ?? 0;
 
   if (categories.has("Background Verification") || includesAny(snippets, ["verify", "background check"])) {
-    bullets.push("The company may verify information you submitted.");
+    bullets.push("The company may verify statements made in your application.");
   }
-  if (includesAny(snippets, ["former employers", "educational institutions", "references", "schools"])) {
-    bullets.push("Former employers, schools, or references may be contacted.");
+  if (
+    includesAny(snippets, [
+      "former employers",
+      "co-workers",
+      "educational institutions",
+      "references",
+      "schools"
+    ])
+  ) {
+    bullets.push("The company may contact former employers, co-workers, schools, references, or others.");
   }
-  if (includesAny(snippets, ["without prior notice", "without notice"])) {
+  if (includesAny(snippets, ["without giving me prior notice", "without prior notice", "without notice"])) {
     bullets.push("Information may be requested or released without prior notice to you.");
   }
-  if (categories.has("Liability Waiver") || includesAny(snippets, ["release", "liability"])) {
+  if (includesAny(snippets, ["release from any liability", "liability or responsibility"])) {
+    bullets.push(
+      "You may be releasing the company and information providers from liability related to verification."
+    );
+  } else if (extractedTextLength < 100 && categories.has("Liability Waiver")) {
     bullets.push("You may be releasing the company or information providers from liability.");
   }
   if (categories.has("Employment Terms") || includesAny(snippets, ["at-will", "terminated at any time"])) {
-    bullets.push("If hired, employment may be at-will and can end at any time.");
+    bullets.push("If hired, your employment may be at-will and can end at any time.");
   }
-  if (includesAny(snippets, ["misstatement", "omission", "rejection", "termination"])) {
-    bullets.push("Incorrect or omitted information may lead to rejection or termination.");
+  if (includesAny(snippets, ["misrepresentation", "misstatement", "omission"])) {
+    bullets.push("Misstatements or omitted information may lead to rejection or termination.");
   }
-  if (categories.has("Data Sharing") || includesAny(snippets, ["third parties", "personal information"])) {
+  if (includesAny(snippets, ["strictest confidence", "confidential"])) {
+    bullets.push("You agree to keep company or customer information confidential.");
+  }
+  if (includesAny(snippets, ["true and correct"])) {
+    bullets.push("You confirm that your application materials are true and complete.");
+  }
+  if (
+    extractedTextLength < 100 &&
+    (categories.has("Data Sharing") || includesAny(snippets, ["third parties", "personal information"]))
+  ) {
     bullets.push("Your personal information may be shared with outside parties.");
   }
 
-  return normalizeBullets(
-    bullets.length ? bullets : ["This may be standard language, but it is still meaningful consent."]
-  );
+  if (!bullets.length && extractedTextLength < 100) {
+    return ["ConsentLens found agreement language, but the extracted text was too short to summarize safely."];
+  }
+
+  return normalizeBullets(bullets);
 }
 
 function includesAny(text: string, values: string[]): boolean {

@@ -177,6 +177,7 @@ function addCandidate(
     priority,
     markerCount: markers.length,
     markers,
+    sourceElement: getElementDebugInfo(element),
     pageUrl: options.pageUrl,
     domain: options.domain,
     enabledCategories: options.enabledCategories
@@ -185,6 +186,17 @@ function addCandidate(
   if (!existing || block.priority + block.markerCount > existing.priority + existing.markerCount) {
     candidates.set(signature, block);
   }
+}
+
+function getElementDebugInfo(element: Element): ConsentBlock["sourceElement"] {
+  return {
+    tagName: element.tagName.toLowerCase(),
+    className:
+      element instanceof HTMLElement || element instanceof SVGElement
+        ? String(element.getAttribute("class") ?? "")
+        : "",
+    id: element.id
+  };
 }
 
 function findConsentContainer(start: Element): Element {
