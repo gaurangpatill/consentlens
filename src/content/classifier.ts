@@ -1,5 +1,5 @@
 import { CONSENT_PATTERNS } from "../shared/patterns";
-import { clampRiskScore, getRiskLevel, SCORE } from "../shared/scoring";
+import { buildBullets, clampRiskScore, getRiskLevel, SCORE } from "../shared/scoring";
 import { buildFallbackClauseBullets, summarizeClauses } from "./clauseSummarizer";
 import type {
   ConsentAnalysis,
@@ -63,8 +63,10 @@ export class RuleBasedConsentAnalyzer implements ConsentAnalyzer {
     const categories = Array.from(new Set(matches.map((match) => match.category)));
     const clauseSummary = summarizeClauses(input.text);
     const fallbackBullets = buildFallbackClauseBullets(input.text);
-    const fallbackBulletsUsed = clauseSummary.bullets.length === 0 && fallbackBullets.length > 0;
-    const youMayBeAgreeingTo = clauseSummary.bullets.length ? clauseSummary.bullets : fallbackBullets;
+    const matchBullets = matches.length ? buildBullets(matches) : [];
+    const rawBullets = clauseSummary.bullets.length ? clauseSummary.bullets : fallbackBullets;
+    const youMayBeAgreeingTo = rawBullets.length ? rawBullets : matchBullets;
+    const fallbackBulletsUsed = clauseSummary.bullets.length === 0 && youMayBeAgreeingTo.length > 0;
     const score = clauseSummary.matchedTriggerPhrases.length
       ? clauseSummary.score
       : scoreBlock(input, matches, categories);
@@ -309,10 +311,6 @@ function splitIntoSentences(text: string): string[] {
     .filter(Boolean);
 }
 
-function includesAny(text: string, needles: string[]): boolean {
-  return needles.some((needle) => text.includes(needle));
-}
-
 function normalizeComparable(value: string): string {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
@@ -349,7 +347,7 @@ function normalizeLlmResponse(
     typeof response.score !== "number" ||
     !["low", "medium", "high"].includes(response.riskLevel ?? "") ||
     typeof response.summaryLine !== "string" ||
-    youMayBeAgreeingTo.length < 3 ||
+    youMayBeAgreeingTo.length < 1 ||
     !Array.isArray(response.categories) ||
     !Array.isArray(response.sourceSnippets) ||
     typeof response.confidence !== "number"

@@ -197,7 +197,7 @@ function buildEmptyAnalysis(domain: string): ConsentAnalysis {
     summary: "No important consent terms were detected on the visible page.",
     youMayBeAgreeingTo: [],
     importantPoints: ["No meaningful consent block was found in the visible page text."],
-    bullets: ["No notable agreement language was found in visible page text."],
+    bullets: ["No meaningful consent block was found in the visible page text."],
     sourceSnippets: [],
     sourceText: "",
     confidence: 0,
