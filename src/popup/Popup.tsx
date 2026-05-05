@@ -30,11 +30,7 @@ export function Popup() {
     }
 
     try {
-      const analysis = normalizeConsentAnalysis(
-        await sendTabMessage<Partial<ConsentAnalysis>>(tab.id, {
-          type: "CONSENTLENS_GET_ANALYSIS"
-        })
-      );
+      const analysis = await getBestTabAnalysis(tab.id, { type: "CONSENTLENS_GET_ANALYSIS" });
       if (!analysis) {
         setState({ status: "unsupported", message: "Refresh this page to start scanning." });
         return;
@@ -48,11 +44,7 @@ export function Popup() {
   async function rescan(): Promise<void> {
     if (state.status !== "ready" || !state.activeTabId) return;
     setState({ status: "loading" });
-    const analysis = normalizeConsentAnalysis(
-      await sendTabMessage<Partial<ConsentAnalysis>>(state.activeTabId, {
-        type: "CONSENTLENS_RESCAN"
-      })
-    );
+    const analysis = await getBestTabAnalysis(state.activeTabId, { type: "CONSENTLENS_RESCAN" });
     if (!analysis) {
       setState({ status: "unsupported", message: "Refresh this page to start scanning." });
       return;
@@ -143,7 +135,7 @@ function AnalysisView({
 
       {agreementBullets.length > 0 && (
         <>
-          <p className="points-title">You may be agreeing to:</p>
+      <p className="points-title">You are signing up for:</p>
           <ul className="bullet-list">
             {agreementBullets.map((bullet) => (
               <li key={bullet}>{bullet}</li>
@@ -246,6 +238,44 @@ async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
 
 function sendTabMessage<T>(tabId: number, message: ConsentMessage): Promise<T> {
   return chrome.tabs.sendMessage(tabId, message) as Promise<T>;
+}
+
+async function getBestTabAnalysis(
+  tabId: number,
+  message: ConsentMessage
+): Promise<ConsentAnalysis | undefined> {
+  const frameIds = await getFrameIds(tabId);
+  const responses = await Promise.all(
+    frameIds.map(async (frameId) => {
+      try {
+        return normalizeConsentAnalysis(
+          (await chrome.tabs.sendMessage(tabId, message, { frameId })) as Partial<ConsentAnalysis>
+        );
+      } catch {
+        return undefined;
+      }
+    })
+  );
+
+  return responses
+    .filter((analysis): analysis is ConsentAnalysis => Boolean(analysis))
+    .sort(compareAnalyses)[0];
+}
+
+async function getFrameIds(tabId: number): Promise<number[]> {
+  try {
+    const frames = await chrome.webNavigation.getAllFrames({ tabId });
+    const ids = frames?.map((frame) => frame.frameId) ?? [0];
+    return ids.length ? ids : [0];
+  } catch {
+    return [0];
+  }
+}
+
+function compareAnalyses(a: ConsentAnalysis, b: ConsentAnalysis): number {
+  if (a.detected !== b.detected) return a.detected ? -1 : 1;
+  if (a.score !== b.score) return b.score - a.score;
+  return b.debug.extractedTextLength - a.debug.extractedTextLength;
 }
 
 function formatSourceElement(tagName: string, className: string, id: string): string {

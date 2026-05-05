@@ -12,13 +12,15 @@ export const manifest: ManifestV3Export = {
     default_title: "ConsentLens"
   },
   options_page: "options.html",
-  permissions: ["storage", "activeTab", "tabs"],
+  permissions: ["storage", "activeTab", "tabs", "webNavigation"],
   host_permissions: ["<all_urls>"],
   content_scripts: [
     {
       matches: ["<all_urls>"],
       js: ["content.js"],
-      run_at: "document_idle"
+      run_at: "document_idle",
+      all_frames: true,
+      match_about_blank: true
     }
   ]
 };

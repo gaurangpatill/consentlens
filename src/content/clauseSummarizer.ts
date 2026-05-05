@@ -59,7 +59,6 @@ const CLAUSE_RULES: ClauseRule[] = [
 export function summarizeClauses(extractedText: string): ClauseSummary {
   const lower = extractedText.toLowerCase();
   const matchedTriggerPhrases: string[] = [];
-  const bullets: string[] = [];
   let score = 0;
 
   CLAUSE_RULES.forEach((rule) => {
@@ -67,9 +66,10 @@ export function summarizeClauses(extractedText: string): ClauseSummary {
     if (!matched.length) return;
 
     matchedTriggerPhrases.push(...matched);
-    bullets.push(rule.bullet);
     score += rule.score;
   });
+
+  const bullets = buildGroupedBullets(lower);
 
   if (lower.includes("without giving me prior notice") || lower.includes("release from any liability")) {
     score = Math.max(score, 60);
@@ -82,6 +82,74 @@ export function summarizeClauses(extractedText: string): ClauseSummary {
     fallbackBulletsUsed: false,
     summaryLine: buildClauseSummaryLine(lower, bullets)
   };
+}
+
+function buildGroupedBullets(lower: string): string[] {
+  const bullets: string[] = [];
+
+  const hasVerification =
+    lower.includes("verify") &&
+    (lower.includes("statements made by me") || lower.includes("statements"));
+  const hasOutsideContacts =
+    lower.includes("former employers") ||
+    lower.includes("co-workers") ||
+    lower.includes("schools") ||
+    lower.includes("references");
+
+  if (hasVerification && hasOutsideContacts) {
+    bullets.push(
+      "The company can verify your application statements and contact former employers, co-workers, schools, references, or others."
+    );
+  } else if (hasVerification) {
+    bullets.push(
+      "The company can verify your application statements and request supporting records such as transcripts or evaluations."
+    );
+  } else if (hasOutsideContacts) {
+    bullets.push(
+      "The company may contact former employers, co-workers, schools, references, or others about your employment or education."
+    );
+  }
+
+  if (
+    lower.includes("without giving me prior notice") ||
+    lower.includes("release from any liability") ||
+    lower.includes("liability or responsibility")
+  ) {
+    bullets.push(
+      "Those parties may release information without prior notice, and you may be releasing the company and information providers from verification-related liability."
+    );
+  }
+
+  const hasConfidentiality = lower.includes("strictest confidence") || lower.includes("confidential");
+  const hasPolicies =
+    lower.includes("policies and procedures") ||
+    lower.includes("safety rules") ||
+    lower.includes("security investigation");
+
+  if (hasConfidentiality || hasPolicies) {
+    bullets.push(
+      "You agree to keep company or customer information confidential and follow company policies, safety rules, or security checks if hired."
+    );
+  }
+
+  if (
+    lower.includes("at-will") ||
+    lower.includes("terminated at any time") ||
+    lower.includes("with or without cause") ||
+    lower.includes("with or without notice") ||
+    lower.includes("misrepresentation") ||
+    lower.includes("omission")
+  ) {
+    bullets.push(
+      "If hired, employment may be at-will, and misrepresentations or omissions may lead to rejection or termination."
+    );
+  }
+
+  if (lower.includes("true and correct") && bullets.length < 4) {
+    bullets.push("You confirm that your application materials are true, complete, and correct.");
+  }
+
+  return bullets;
 }
 
 export function buildFallbackClauseBullets(extractedText: string): string[] {
