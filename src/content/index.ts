@@ -24,7 +24,21 @@ async function initialize(): Promise<void> {
   setupRuntimeMessages();
 }
 
+function isContextValid(): boolean {
+  try {
+    return Boolean(chrome.runtime?.id);
+  } catch {
+    return false;
+  }
+}
+
 async function runScan(): Promise<ConsentAnalysis | undefined> {
+  if (!isContextValid()) {
+    observer?.disconnect();
+    overlay.remove();
+    return undefined;
+  }
+
   const domain = getDomain();
   if (!domain || (await isDomainIgnored(domain))) {
     overlay.remove();
@@ -79,6 +93,10 @@ function renderOverlay(): void {
 function setupMutationObserver(): void {
   observer?.disconnect();
   observer = new MutationObserver(() => {
+    if (!isContextValid()) {
+      observer?.disconnect();
+      return;
+    }
     window.clearTimeout(scanTimer);
     scanTimer = window.setTimeout(() => {
       void runScan();
@@ -96,6 +114,7 @@ function setupFrameAnalysisMessages(): void {
   window.addEventListener("message", (event: MessageEvent) => {
     if (event.source === window || !event.source) return;
     if (!isConsentLensFrameAnalysisMessage(event.data)) return;
+    if (!isContextValid()) return;
 
     childFrameAnalyses.set(event.source as Window, event.data.analysis);
     void setLastAnalysis(getBestAnalysis());
