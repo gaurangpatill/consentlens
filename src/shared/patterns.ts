@@ -9,7 +9,6 @@ export const CONSENT_PATTERNS: PatternRule[] = [
       "verify all statements made by me",
       "former employers",
       "educational institutions",
-      "references",
       "background check"
     ],
     explanation:

@@ -25,7 +25,7 @@ const BLOCK_SIGNALS: CategorySignal[] = [
   {
     category: "Background Verification",
     severity: "high",
-    phrases: ["verify", "investigate", "screening", "employment history", "education history"],
+    phrases: ["employment history", "education history"],
     explanation:
       "You may be authorizing verification of personal, employment, or education information."
   },
