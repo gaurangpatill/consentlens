@@ -20,7 +20,7 @@ const CLAUSE_RULES: ClauseRule[] = [
     score: 20
   },
   {
-    triggers: ["former employers", "co-workers", "schools", "references"],
+    triggers: ["former employers", "co-workers"],
     bullet: "The company may contact former employers, co-workers, schools, references, or others.",
     score: 15
   },
@@ -201,10 +201,7 @@ function buildGroupedBullets(lower: string): string[] {
     lower.includes("verify") &&
     (lower.includes("statements made by me") || lower.includes("statements"));
   const hasOutsideContacts =
-    lower.includes("former employers") ||
-    lower.includes("co-workers") ||
-    lower.includes("schools") ||
-    lower.includes("references");
+    lower.includes("former employers") || lower.includes("co-workers");
 
   if (hasVerification && hasOutsideContacts) {
     bullets.push(
