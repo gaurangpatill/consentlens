@@ -87,7 +87,7 @@ function setupRuntimeMessages(): void {
 
 async function handleMessage(message: ConsentMessage): Promise<ConsentAnalysis | { ok: true }> {
   if (message.type === "CONSENTLENS_GET_ANALYSIS") {
-    return currentAnalysis ?? (await runScan()) ?? buildEmptyAnalysis(getDomain());
+    return (await runScan()) ?? buildEmptyAnalysis(getDomain());
   }
 
   if (message.type === "CONSENTLENS_RESCAN") {

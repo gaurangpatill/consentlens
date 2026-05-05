@@ -41,11 +41,6 @@ export function Popup() {
       }
       setState({ status: "ready", analysis, activeTabId: tab.id });
     } catch {
-      const fallback = await getLastAnalysis();
-      if (fallback) {
-        setState({ status: "ready", analysis: fallback, activeTabId: tab.id });
-        return;
-      }
       setState({ status: "unsupported", message: "Refresh this page to start scanning." });
     }
   }
@@ -146,12 +141,16 @@ function AnalysisView({
         <p className="summary-line">{analysis.summaryLine}</p>
       </div>
 
-      <p className="points-title">You may be agreeing to:</p>
-      <ul className="bullet-list">
-        {agreementBullets.map((bullet) => (
-          <li key={bullet}>{bullet}</li>
-        ))}
-      </ul>
+      {agreementBullets.length > 0 && (
+        <>
+          <p className="points-title">You may be agreeing to:</p>
+          <ul className="bullet-list">
+            {agreementBullets.map((bullet) => (
+              <li key={bullet}>{bullet}</li>
+            ))}
+          </ul>
+        </>
+      )}
 
       {analysis.categories.length > 0 && (
         <div className="chip-list secondary-details">
