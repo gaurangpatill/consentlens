@@ -10,12 +10,15 @@ let currentAnalysis: ConsentAnalysis | undefined;
 let dismissedForUrl: string | undefined;
 let scanTimer: number | undefined;
 let observer: MutationObserver | undefined;
+const childFrameAnalyses = new Map<Window, ConsentAnalysis>();
+const isTopFrame = window.self === window.top;
 
 void initialize();
 
 async function initialize(): Promise<void> {
   if (!document.body || !isSupportedPage()) return;
 
+  if (isTopFrame) setupFrameAnalysisMessages();
   await runScan();
   setupMutationObserver();
   setupRuntimeMessages();
@@ -41,10 +44,25 @@ async function runScan(): Promise<ConsentAnalysis | undefined> {
     ? await analyzer.analyze(blocks[0])
     : buildEmptyAnalysis(domain);
 
-  await setLastAnalysis(currentAnalysis);
+  if (isTopFrame) {
+    await setLastAnalysis(getBestAnalysis());
+  } else {
+    postAnalysisToTop(currentAnalysis);
+  }
 
-  if (currentAnalysis.detected && dismissedForUrl !== window.location.href) {
-    overlay.show(currentAnalysis, {
+  renderOverlay();
+  return currentAnalysis;
+}
+
+function renderOverlay(): void {
+  if (!isTopFrame) {
+    overlay.remove();
+    return;
+  }
+
+  const bestAnalysis = getBestAnalysis();
+  if (bestAnalysis.detected && dismissedForUrl !== window.location.href) {
+    overlay.show(bestAnalysis, {
       onDismiss: () => {
         dismissedForUrl = window.location.href;
         overlay.remove();
@@ -56,8 +74,6 @@ async function runScan(): Promise<ConsentAnalysis | undefined> {
   } else {
     overlay.remove();
   }
-
-  return currentAnalysis;
 }
 
 function setupMutationObserver(): void {
@@ -73,6 +89,17 @@ function setupMutationObserver(): void {
     childList: true,
     subtree: true,
     characterData: true
+  });
+}
+
+function setupFrameAnalysisMessages(): void {
+  window.addEventListener("message", (event: MessageEvent) => {
+    if (event.source === window || !event.source) return;
+    if (!isConsentLensFrameAnalysisMessage(event.data)) return;
+
+    childFrameAnalyses.set(event.source as Window, event.data.analysis);
+    void setLastAnalysis(getBestAnalysis());
+    renderOverlay();
   });
 }
 
@@ -116,6 +143,45 @@ async function ignoreCurrentSite(): Promise<void> {
   overlay.remove();
   currentAnalysis = buildEmptyAnalysis(domain);
   await setLastAnalysis(currentAnalysis);
+}
+
+function postAnalysisToTop(analysis: ConsentAnalysis): void {
+  try {
+    window.top?.postMessage(
+      {
+        type: "CONSENTLENS_FRAME_ANALYSIS",
+        analysis
+      },
+      "*"
+    );
+  } catch {
+    // Cross-origin frame messaging can fail on restricted pages. The popup still queries frames directly.
+  }
+}
+
+function getBestAnalysis(): ConsentAnalysis {
+  const analyses = [currentAnalysis, ...childFrameAnalyses.values()].filter(
+    (analysis): analysis is ConsentAnalysis => Boolean(analysis)
+  );
+  return analyses.sort(compareAnalyses)[0] ?? buildEmptyAnalysis(getDomain());
+}
+
+function compareAnalyses(a: ConsentAnalysis, b: ConsentAnalysis): number {
+  if (a.detected !== b.detected) return a.detected ? -1 : 1;
+  if (a.score !== b.score) return b.score - a.score;
+  return b.debug.extractedTextLength - a.debug.extractedTextLength;
+}
+
+function isConsentLensFrameAnalysisMessage(
+  value: unknown
+): value is { type: "CONSENTLENS_FRAME_ANALYSIS"; analysis: ConsentAnalysis } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    value.type === "CONSENTLENS_FRAME_ANALYSIS" &&
+    "analysis" in value
+  );
 }
 
 function buildEmptyAnalysis(domain: string): ConsentAnalysis {
