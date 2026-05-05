@@ -32,28 +32,14 @@ const BLOCK_SIGNALS: CategorySignal[] = [
   {
     category: "Data Sharing",
     severity: "medium",
-    phrases: [
-      "without prior notice",
-      "without notice",
-      "release information",
-      "provide information",
-      "consumer report",
-      "outside parties"
-    ],
+    phrases: ["consumer report", "outside parties"],
     explanation: "Information may be requested from or shared with outside parties."
-  },
-  {
-    category: "Liability Waiver",
-    severity: "high",
-    phrases: ["release", "liability", "claims", "damages", "hold harmless"],
-    explanation:
-      "You may be releasing one or more parties from responsibility for certain outcomes."
   },
   {
     category: "Employment Terms",
     severity: "medium",
-    phrases: ["I understand", "employment", "if hired", "at will", "at-will"],
-    explanation: "You may be acknowledging employment terms connected to the application."
+    phrases: ["if hired"],
+    explanation: "You may be acknowledging employment terms connected to the agreement."
   }
 ];
 

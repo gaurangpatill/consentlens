@@ -198,22 +198,21 @@ function buildGroupedBullets(lower: string): string[] {
 
   // Job application / background verification
   const hasVerification =
-    lower.includes("verify") &&
-    (lower.includes("statements made by me") || lower.includes("statements"));
+    lower.includes("verify") && lower.includes("statements made by me");
   const hasOutsideContacts =
     lower.includes("former employers") || lower.includes("co-workers");
 
   if (hasVerification && hasOutsideContacts) {
     bullets.push(
-      "The company can verify your application statements and contact former employers, co-workers, schools, references, or others."
+      "The company can verify information you provided and contact former employers, co-workers, or others listed as contacts."
     );
   } else if (hasVerification) {
     bullets.push(
-      "The company can verify your application statements and request supporting records such as transcripts or evaluations."
+      "The company can verify information you provided and request supporting records."
     );
   } else if (hasOutsideContacts) {
     bullets.push(
-      "The company may contact former employers, co-workers, schools, references, or others about your employment or education."
+      "The company may contact former employers, co-workers, or others listed as contacts."
     );
   }
 
@@ -240,7 +239,7 @@ function buildGroupedBullets(lower: string): string[] {
 
   if (hasConfidentiality || hasPolicies) {
     bullets.push(
-      "You agree to keep company or customer information confidential and follow company policies, safety rules, or security checks if hired."
+      "You agree to keep certain information confidential and follow the company's policies, safety rules, or security requirements."
     );
   }
 
@@ -253,12 +252,12 @@ function buildGroupedBullets(lower: string): string[] {
     lower.includes("omission")
   ) {
     bullets.push(
-      "If hired, employment may be at-will, and misrepresentations or omissions may lead to rejection or termination."
+      "Employment may be at-will, and misrepresentations or omissions may affect eligibility or standing."
     );
   }
 
   if (lower.includes("true and correct") && bullets.length < 4) {
-    bullets.push("You confirm that your application materials are true, complete, and correct.");
+    bullets.push("You confirm that the information you provided is true, complete, and correct.");
   }
 
   // Financial / subscription
@@ -372,8 +371,7 @@ export function buildFallbackClauseBullets(extractedText: string): string[] {
 function normalizeScore(score: number, lower: string): number {
   const capped = Math.min(100, Math.max(1, score));
   const isJobApplicationBlock =
-    lower.includes("employment") &&
-    (lower.includes("former employers") || lower.includes("references")) &&
+    lower.includes("former employers") &&
     (lower.includes("at-will") || lower.includes("terminated at any time"));
 
   return isJobApplicationBlock ? Math.min(capped, 85) : capped;
@@ -382,11 +380,11 @@ function normalizeScore(score: number, lower: string): number {
 function buildClauseSummaryLine(lower: string, bullets: string[]): string {
   if (
     lower.includes("verify") &&
-    (lower.includes("former employers") || lower.includes("references")) &&
+    lower.includes("former employers") &&
     (lower.includes("without giving me prior notice") ||
       lower.includes("release from any liability"))
   ) {
-    return "You are granting the company broad permission to verify your background, contact outside parties, and rely on your application statements.";
+    return "You are granting broad permission to verify your background, contact outside parties, and act on information you provided.";
   }
 
   if (lower.includes("binding arbitration") || lower.includes("class action waiver")) {

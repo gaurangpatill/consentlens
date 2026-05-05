@@ -166,41 +166,31 @@ function buildFallbackBullets(analysis: Partial<ConsentAnalysis>): string[] {
   const bullets: string[] = [];
   const extractedTextLength = analysis.sourceText?.trim().length ?? 0;
 
-  if (categories.has("Background Verification") || includesAny(snippets, ["verify", "background check"])) {
-    bullets.push("The company may verify statements made in your application.");
+  if (categories.has("Background Verification") || includesAny(snippets, ["background check"])) {
+    bullets.push("You may be consenting to a background check or verification of information you provided.");
   }
-  if (
-    includesAny(snippets, [
-      "former employers",
-      "co-workers",
-      "educational institutions",
-      "references",
-      "schools"
-    ])
-  ) {
-    bullets.push("The company may contact former employers, co-workers, schools, references, or others.");
+  if (includesAny(snippets, ["former employers", "co-workers", "educational institutions"])) {
+    bullets.push("The company may contact former employers, co-workers, or others listed as contacts.");
   }
-  if (includesAny(snippets, ["without giving me prior notice", "without prior notice", "without notice"])) {
+  if (includesAny(snippets, ["without giving me prior notice", "without prior notice"])) {
     bullets.push("Information may be requested or released without prior notice to you.");
   }
   if (includesAny(snippets, ["release from any liability", "liability or responsibility"])) {
-    bullets.push(
-      "You may be releasing the company and information providers from liability related to verification."
-    );
+    bullets.push("You may be releasing the company and other parties from liability.");
   } else if (extractedTextLength < 100 && categories.has("Liability Waiver")) {
-    bullets.push("You may be releasing the company or information providers from liability.");
+    bullets.push("You may be releasing the company or other parties from liability.");
   }
-  if (categories.has("Employment Terms") || includesAny(snippets, ["at-will", "terminated at any time"])) {
-    bullets.push("If hired, your employment may be at-will and can end at any time.");
+  if (includesAny(snippets, ["at-will", "terminated at any time"])) {
+    bullets.push("Employment may be at-will and can end at any time.");
   }
   if (includesAny(snippets, ["misrepresentation", "misstatement", "omission"])) {
-    bullets.push("Misstatements or omitted information may lead to rejection or termination.");
+    bullets.push("Misstatements or omissions may affect your eligibility or standing.");
   }
   if (includesAny(snippets, ["strictest confidence", "confidential"])) {
-    bullets.push("You agree to keep company or customer information confidential.");
+    bullets.push("You agree to keep certain information confidential.");
   }
   if (includesAny(snippets, ["true and correct"])) {
-    bullets.push("You confirm that your application materials are true and complete.");
+    bullets.push("You confirm that the information you provided is true and complete.");
   }
   if (
     extractedTextLength < 100 &&
