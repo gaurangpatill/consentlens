@@ -69,6 +69,12 @@ export function buildBullets(matches: ConsentFinding[]): string[] {
   if (categories.has("Privacy Tracking")) {
     bullets.push("Your activity or device information may be used for analytics or advertising.");
   }
+  if (categories.has("Content License")) {
+    bullets.push("You may be granting the company a permanent license to use content you post or create.");
+  }
+  if (categories.has("Account Control")) {
+    bullets.push("The company may restrict, suspend, or close your account at its discretion.");
+  }
 
   if (bullets.length < 2) {
     bullets.push("This may be standard language, but it is still meaningful consent.");

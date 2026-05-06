@@ -7,9 +7,12 @@ export const CONSENT_PATTERNS: PatternRule[] = [
     phrases: [
       "I authorize the Company to verify",
       "verify all statements made by me",
+      "statements made by me",
       "former employers",
       "educational institutions",
-      "background check"
+      "background check",
+      "consumer report",
+      "outside parties"
     ],
     explanation:
       "You may be authorizing the company to contact employers, schools, or references to verify your information."
@@ -22,7 +25,11 @@ export const CONSENT_PATTERNS: PatternRule[] = [
       "hold harmless",
       "waive any claims",
       "not liable",
-      "without liability"
+      "without liability",
+      "indemnify",
+      "indemnification",
+      "limitation of liability",
+      "limit our liability"
     ],
     explanation:
       "You may be giving up the ability to hold another party responsible for certain outcomes."
@@ -33,9 +40,13 @@ export const CONSENT_PATTERNS: PatternRule[] = [
     phrases: [
       "binding arbitration",
       "class action waiver",
+      "class action",
       "waive my right",
       "jury trial",
-      "arbitration agreement"
+      "arbitration agreement",
+      "waive all claims",
+      "governing law",
+      "jurisdiction"
     ],
     explanation: "You may be agreeing to limits on how disputes can be handled."
   },
@@ -57,10 +68,17 @@ export const CONSENT_PATTERNS: PatternRule[] = [
     phrases: [
       "auto-renew",
       "automatically renew",
+      "automatic renewal",
       "recurring charge",
+      "recurring billing",
+      "recurring fee",
       "free trial",
       "cancellation",
-      "non-refundable"
+      "non-refundable",
+      "cancellation fee",
+      "early termination fee",
+      "price increase",
+      "rate change"
     ],
     explanation:
       "You may be agreeing to a recurring payment or cancellation condition."
@@ -74,7 +92,11 @@ export const CONSENT_PATTERNS: PatternRule[] = [
       "business partners",
       "affiliates",
       "sell your data",
-      "personal information"
+      "sell your personal information",
+      "personal information",
+      "personal data",
+      "data broker",
+      "service providers"
     ],
     explanation: "Your personal information may be shared with outside parties."
   },
@@ -86,10 +108,58 @@ export const CONSENT_PATTERNS: PatternRule[] = [
       "cookies and similar technologies",
       "device identifiers",
       "behavioral advertising",
-      "analytics partners"
+      "targeted advertising",
+      "interest-based advertising",
+      "analytics partners",
+      "advertising partners",
+      "location data",
+      "precise location",
+      "biometric",
+      "voice recording",
+      "audio recording"
     ],
     explanation:
-      "Your browsing or device activity may be tracked for analytics or advertising."
+      "Your browsing, location, or device activity may be tracked for analytics or advertising."
+  },
+  {
+    category: "Content License",
+    severity: "high",
+    phrases: [
+      "irrevocable license",
+      "perpetual license",
+      "royalty-free license",
+      "worldwide license",
+      "sublicense",
+      "sublicensable",
+      "user content",
+      "user-generated content",
+      "content you post",
+      "content you submit",
+      "reproduce and distribute",
+      "display and distribute",
+      "moral rights",
+      "worldwide, royalty-free"
+    ],
+    explanation:
+      "You may be granting the company a broad or permanent license to use content you create or post."
+  },
+  {
+    category: "Account Control",
+    severity: "medium",
+    phrases: [
+      "terminate your account",
+      "suspend your account",
+      "close your account",
+      "terminate or suspend",
+      "deactivate your account",
+      "ban your account",
+      "remove your content",
+      "delete your content",
+      "at our sole discretion",
+      "in our sole discretion"
+    ],
+    explanation:
+      "The company may restrict, suspend, or terminate your account at its discretion."
   },
   {
     category: "General Consent",
@@ -100,7 +170,12 @@ export const CONSENT_PATTERNS: PatternRule[] = [
       "I agree",
       "I acknowledge",
       "terms and conditions",
-      "privacy policy"
+      "privacy policy",
+      "by clicking",
+      "by submitting",
+      "by checking this box",
+      "updates to these terms",
+      "changes to this agreement"
     ],
     explanation:
       "You may be confirming agreement to terms, policies, or permissions on this page."

@@ -13,15 +13,20 @@ type ClauseRule = {
 };
 
 const CLAUSE_RULES: ClauseRule[] = [
-  // Job application / background verification
+  // Background verification
   {
-    triggers: ["verify", "statements made by me"],
-    bullet: "The company may verify statements made in your application.",
+    triggers: ["background check"],
+    bullet: "You may be consenting to a background check on your personal history.",
     score: 20
   },
   {
+    triggers: ["statements made by me"],
+    bullet: "The company can verify information you provided and request supporting records.",
+    score: 15
+  },
+  {
     triggers: ["former employers", "co-workers"],
-    bullet: "The company may contact former employers, co-workers, schools, references, or others.",
+    bullet: "The company may contact former employers, co-workers, or others listed as contacts.",
     score: 15
   },
   {
@@ -31,52 +36,46 @@ const CLAUSE_RULES: ClauseRule[] = [
   },
   {
     triggers: ["release from any liability", "liability or responsibility"],
-    bullet:
-      "You may be releasing the company and information providers from liability related to verification.",
+    bullet: "You may be releasing the company and information providers from liability.",
     score: 20
   },
   {
-    triggers: ["strictest confidence", "confidential"],
-    bullet: "You agree to keep company or customer information confidential.",
-    score: 5
-  },
-  {
-    triggers: ["at-will", "terminated at any time"],
-    bullet: "If hired, your employment may be at-will and can end at any time.",
-    score: 10
-  },
-  {
     triggers: ["misrepresentation", "omission"],
-    bullet: "Misstatements or omitted information may lead to rejection or termination.",
+    bullet: "Misstatements or omitted information may affect your eligibility or standing.",
     score: 10
   },
   {
     triggers: ["true and correct"],
-    bullet: "You confirm that your application materials are true and complete.",
+    bullet: "You confirm that the information you provided is true, complete, and accurate.",
     score: 5
   },
-  // Background check
+
+  // Employment terms
   {
-    triggers: ["background check"],
-    bullet: "You may be consenting to a background check on your personal history.",
-    score: 20
+    triggers: ["at-will", "terminated at any time", "with or without cause", "with or without notice"],
+    bullet: "Employment may be at-will and can end at any time, with or without reason.",
+    score: 10
   },
+  {
+    triggers: ["strictest confidence", "policies and procedures", "safety rules"],
+    bullet: "You agree to keep certain information confidential and follow applicable policies.",
+    score: 5
+  },
+
   // Financial / subscription
   {
     triggers: ["auto-renew", "automatically renew", "automatic renewal"],
-    bullet:
-      "Your subscription may automatically renew and you may be charged unless you cancel in time.",
-    score: 20
+    bullet: "Your subscription may automatically renew and you may be charged unless you cancel.",
+    score: 22
   },
   {
     triggers: ["recurring charge", "recurring billing", "recurring fee"],
     bullet: "You may be agreeing to recurring charges to your payment method.",
-    score: 20
+    score: 22
   },
   {
     triggers: ["free trial"],
-    bullet:
-      "A free trial period may be followed by automatic paid charges if you do not cancel.",
+    bullet: "A free trial may be followed by automatic charges if you do not cancel.",
     score: 15
   },
   {
@@ -85,280 +84,245 @@ const CLAUSE_RULES: ClauseRule[] = [
     score: 15
   },
   {
-    triggers: ["cancellation"],
-    bullet: "Specific cancellation conditions or penalties may apply.",
-    score: 10
+    triggers: ["cancellation fee", "early termination fee", "termination fee"],
+    bullet: "Canceling early may result in fees or penalties.",
+    score: 15
   },
+  {
+    triggers: ["cancellation"],
+    bullet: "Specific cancellation conditions or restrictions may apply.",
+    score: 8
+  },
+  {
+    triggers: ["price increase", "price change", "rate increase", "rate change"],
+    bullet: "Prices or rates may change and you may be billed at the updated rate.",
+    score: 12
+  },
+
   // Legal rights
   {
     triggers: ["binding arbitration", "arbitration agreement"],
-    bullet:
-      "You may be agreeing to resolve disputes through binding arbitration instead of court.",
-    score: 25
+    bullet: "You may be agreeing to resolve all disputes through binding arbitration instead of court.",
+    score: 44
   },
   {
     triggers: ["class action waiver", "class action"],
     bullet: "You may be waiving the right to participate in class action lawsuits.",
+    score: 44
+  },
+  {
+    triggers: ["jury trial"],
+    bullet: "You may be waiving the right to a jury trial.",
     score: 25
   },
   {
-    triggers: ["jury trial", "waive my right", "waive any claims"],
-    bullet:
-      "You may be waiving certain legal rights, including the right to a jury trial.",
-    score: 25
+    triggers: ["waive my right", "waive any claims", "waive all claims"],
+    bullet: "You may be waiving certain legal rights or claims.",
+    score: 22
   },
+  {
+    triggers: ["limitation of liability", "limit our liability"],
+    bullet: "The company may limit how much you can recover if something goes wrong.",
+    score: 20
+  },
+  {
+    triggers: ["governing law", "venue for disputes"],
+    bullet: "Disputes may only be handled in a specific jurisdiction or under a specific law.",
+    score: 8
+  },
+
   // Data sharing
   {
-    triggers: ["sell your data"],
+    triggers: ["sell your data", "sell your personal information", "sell your information"],
     bullet: "Your personal information may be sold to third parties.",
+    score: 44
+  },
+  {
+    triggers: ["data broker"],
+    bullet: "Your information may be provided to data brokers or aggregators.",
     score: 25
   },
   {
-    triggers: ["third parties", "business partners", "affiliates"],
-    bullet:
-      "Your personal information may be shared with third-party partners or affiliates.",
+    triggers: ["share your data", "share your personal information"],
+    bullet: "Your personal information may be shared with outside parties.",
+    score: 20
+  },
+  {
+    triggers: ["third parties", "business partners", "affiliates", "service providers"],
+    bullet: "Your information may be shared with third-party partners, affiliates, or service providers.",
     score: 15
   },
   {
-    triggers: ["personal information"],
-    bullet: "Your personal information may be collected, used, or shared.",
+    triggers: ["personal information", "personal data"],
+    bullet: "Your personal information may be collected, used, or disclosed.",
     score: 10
   },
+
   // Privacy / tracking
   {
-    triggers: ["behavioral advertising", "analytics partners"],
-    bullet:
-      "Your activity may be used for targeted advertising or shared with analytics partners.",
+    triggers: ["behavioral advertising", "targeted advertising", "interest-based advertising"],
+    bullet: "Your activity may be used for targeted or behavioral advertising.",
+    score: 15
+  },
+  {
+    triggers: ["analytics partners", "advertising partners"],
+    bullet: "Your data may be shared with analytics or advertising partners.",
     score: 15
   },
   {
     triggers: ["tracking technologies", "cookies and similar technologies", "device identifiers"],
-    bullet:
-      "Cookies and tracking technologies may be used to monitor your browsing and device activity.",
+    bullet: "Cookies and tracking technologies may be used to monitor your activity.",
     score: 15
   },
-  // Liability waiver
   {
-    triggers: ["hold harmless", "not liable", "without liability"],
-    bullet: "The company may not be held liable for certain outcomes or damages.",
+    triggers: ["location data", "precise location", "geolocation"],
+    bullet: "Your location data may be collected and used.",
+    score: 15
+  },
+  {
+    triggers: ["biometric", "fingerprint", "facial recognition"],
+    bullet: "Your biometric information may be collected or used.",
+    score: 25
+  },
+  {
+    triggers: ["voice recording", "audio recording", "record your voice"],
+    bullet: "Your voice or audio may be recorded.",
     score: 20
   },
+
+  // Liability waiver
+  {
+    triggers: ["hold harmless"],
+    bullet: "You agree to hold the company harmless from claims arising from your actions.",
+    score: 20
+  },
+  {
+    triggers: ["not liable", "without liability"],
+    bullet: "The company may not be held liable for certain outcomes or damages.",
+    score: 15
+  },
+  {
+    triggers: ["indemnify", "indemnification"],
+    bullet: "You may be required to cover the company's legal costs arising from your use.",
+    score: 20
+  },
+  {
+    triggers: ["no warranty", "without warranty", "disclaimer of warranties"],
+    bullet: "The service is provided without guarantees or warranties.",
+    score: 10
+  },
+
+  // Content license
+  {
+    triggers: ["irrevocable license", "perpetual license", "royalty-free license"],
+    bullet: "You grant the company a permanent, irrevocable, royalty-free license to use your content.",
+    score: 25
+  },
+  {
+    triggers: ["sublicense", "sublicensable"],
+    bullet: "The company may sublicense your content to other parties.",
+    score: 20
+  },
+  {
+    triggers: ["content you post", "content you submit", "user content", "user-generated content"],
+    bullet: "Content you post or submit may be used by the company.",
+    score: 15
+  },
+  {
+    triggers: ["reproduce and distribute", "worldwide license", "display and distribute", "worldwide, royalty-free"],
+    bullet: "The company may reproduce, display, or distribute your content worldwide.",
+    score: 20
+  },
+  {
+    triggers: ["moral rights", "waive your moral rights"],
+    bullet: "You may be waiving moral rights to your own content.",
+    score: 20
+  },
+
+  // Account control
+  {
+    triggers: ["terminate your account", "suspend your account", "close your account", "terminate or suspend"],
+    bullet: "The company may terminate or suspend your account at any time.",
+    score: 20
+  },
+  {
+    triggers: ["remove your content", "delete your content", "take down your content"],
+    bullet: "The company may remove or delete your content at its discretion.",
+    score: 15
+  },
+  {
+    triggers: ["at our sole discretion", "in our sole discretion"],
+    bullet: "The company may make decisions about your account or content at its sole discretion.",
+    score: 10
+  },
+  {
+    triggers: ["deactivate your account", "account deactivation", "ban your account"],
+    bullet: "Your account may be deactivated or banned.",
+    score: 15
+  },
+
   // General consent signals
   {
-    triggers: ["by clicking", "by submitting", "by checking this box"],
-    bullet:
-      "Clicking or submitting this form constitutes your agreement to the listed terms.",
+    triggers: ["by clicking", "by submitting", "by checking this box", "by signing below"],
+    bullet: "Clicking, submitting, or signing constitutes your agreement to the listed terms.",
     score: 5
   },
   {
-    triggers: ["marketing", "promotional emails", "promotional communications"],
+    triggers: ["marketing", "promotional emails", "promotional communications", "marketing communications"],
     bullet: "You may receive marketing or promotional communications.",
     score: 5
+  },
+  {
+    triggers: ["updates to these terms", "changes to this agreement", "modify these terms", "amended terms"],
+    bullet: "Terms may change, and continued use may constitute acceptance of the new terms.",
+    score: 8
   }
 ];
 
 export function summarizeClauses(extractedText: string): ClauseSummary {
   const lower = extractedText.toLowerCase();
   const matchedTriggerPhrases: string[] = [];
+  const bullets: string[] = [];
   let score = 0;
 
-  CLAUSE_RULES.forEach((rule) => {
+  for (const rule of CLAUSE_RULES) {
     const matched = rule.triggers.filter((trigger) => lower.includes(trigger));
-    if (!matched.length) return;
+    if (!matched.length) continue;
 
     matchedTriggerPhrases.push(...matched);
     score += rule.score;
-  });
-
-  const bullets = buildGroupedBullets(lower);
+    bullets.push(rule.bullet);
+  }
 
   if (
     lower.includes("binding arbitration") ||
-    lower.includes("class action waiver") ||
-    lower.includes("sell your data") ||
-    lower.includes("auto-renew") ||
-    lower.includes("automatically renew") ||
-    lower.includes("without giving me prior notice") ||
-    lower.includes("release from any liability")
+    lower.includes("class action") ||
+    lower.includes("sell your data")
   ) {
     score = Math.max(score, 60);
   }
 
-  return {
-    bullets: Array.from(new Set(bullets)).slice(0, 7),
-    matchedTriggerPhrases: Array.from(new Set(matchedTriggerPhrases)),
-    score: normalizeScore(score, lower),
-    fallbackBulletsUsed: false,
-    summaryLine: buildClauseSummaryLine(lower, bullets)
-  };
-}
-
-function buildGroupedBullets(lower: string): string[] {
-  const bullets: string[] = [];
-
-  // Job application / background verification
-  const hasVerification =
-    lower.includes("verify") && lower.includes("statements made by me");
-  const hasOutsideContacts =
-    lower.includes("former employers") || lower.includes("co-workers");
-
-  if (hasVerification && hasOutsideContacts) {
-    bullets.push(
-      "The company can verify information you provided and contact former employers, co-workers, or others listed as contacts."
-    );
-  } else if (hasVerification) {
-    bullets.push(
-      "The company can verify information you provided and request supporting records."
-    );
-  } else if (hasOutsideContacts) {
-    bullets.push(
-      "The company may contact former employers, co-workers, or others listed as contacts."
-    );
-  }
-
-  if (lower.includes("background check")) {
-    bullets.push("You may be consenting to a background check on your personal history.");
-  }
-
-  if (
-    lower.includes("without giving me prior notice") ||
-    lower.includes("release from any liability") ||
-    lower.includes("liability or responsibility")
-  ) {
-    bullets.push(
-      "Those parties may release information without prior notice, and you may be releasing the company and information providers from verification-related liability."
-    );
-  }
-
-  const hasConfidentiality =
-    lower.includes("strictest confidence") || lower.includes("confidential");
-  const hasPolicies =
-    lower.includes("policies and procedures") ||
-    lower.includes("safety rules") ||
-    lower.includes("security investigation");
-
-  if (hasConfidentiality || hasPolicies) {
-    bullets.push(
-      "You agree to keep certain information confidential and follow the company's policies, safety rules, or security requirements."
-    );
-  }
-
-  if (
-    lower.includes("at-will") ||
-    lower.includes("terminated at any time") ||
-    lower.includes("with or without cause") ||
-    lower.includes("with or without notice") ||
-    lower.includes("misrepresentation") ||
-    lower.includes("omission")
-  ) {
-    bullets.push(
-      "Employment may be at-will, and misrepresentations or omissions may affect eligibility or standing."
-    );
-  }
-
-  if (lower.includes("true and correct") && bullets.length < 4) {
-    bullets.push("You confirm that the information you provided is true, complete, and correct.");
-  }
-
-  // Financial / subscription
   if (
     lower.includes("auto-renew") ||
     lower.includes("automatically renew") ||
-    lower.includes("automatic renewal")
-  ) {
-    bullets.push(
-      "Your subscription may automatically renew and you may be charged unless you cancel in time."
-    );
-  }
-
-  if (
     lower.includes("recurring charge") ||
-    lower.includes("recurring billing") ||
-    lower.includes("recurring fee")
+    lower.includes("without giving me prior notice") ||
+    lower.includes("release from any liability") ||
+    lower.includes("irrevocable license") ||
+    lower.includes("perpetual license")
   ) {
-    bullets.push("You may be agreeing to recurring charges to your payment method.");
+    score = Math.max(score, 40);
   }
 
-  if (lower.includes("free trial")) {
-    bullets.push(
-      "A free trial period may be followed by automatic paid charges if you do not cancel."
-    );
-  }
+  const uniqueBullets = Array.from(new Set(bullets));
 
-  if (lower.includes("non-refundable")) {
-    bullets.push("Payments or fees may be non-refundable.");
-  }
-
-  if (
-    lower.includes("cancellation") &&
-    !lower.includes("auto-renew") &&
-    !lower.includes("automatically renew") &&
-    !lower.includes("recurring")
-  ) {
-    bullets.push("Specific cancellation conditions or penalties may apply.");
-  }
-
-  // Legal rights
-  if (lower.includes("binding arbitration") || lower.includes("arbitration agreement")) {
-    bullets.push(
-      "You may be agreeing to resolve disputes through binding arbitration instead of court."
-    );
-  }
-
-  if (lower.includes("class action waiver") || lower.includes("class action")) {
-    bullets.push("You may be waiving the right to participate in class action lawsuits.");
-  }
-
-  if (
-    lower.includes("jury trial") ||
-    lower.includes("waive my right") ||
-    lower.includes("waive any claims")
-  ) {
-    bullets.push(
-      "You may be waiving certain legal rights, including the right to a jury trial."
-    );
-  }
-
-  // Data sharing
-  if (lower.includes("sell your data")) {
-    bullets.push("Your personal information may be sold to third parties.");
-  } else if (
-    lower.includes("third parties") ||
-    lower.includes("business partners") ||
-    lower.includes("affiliates")
-  ) {
-    bullets.push(
-      "Your personal information may be shared with third-party partners or affiliates."
-    );
-  }
-
-  // Privacy / tracking
-  if (lower.includes("behavioral advertising") || lower.includes("analytics partners")) {
-    bullets.push(
-      "Your activity may be used for targeted advertising or shared with analytics partners."
-    );
-  } else if (
-    lower.includes("tracking technologies") ||
-    lower.includes("cookies and similar technologies") ||
-    lower.includes("device identifiers")
-  ) {
-    bullets.push(
-      "Cookies and tracking technologies may be used to monitor your browsing and device activity."
-    );
-  }
-
-  // Liability waiver
-  if (
-    lower.includes("hold harmless") ||
-    lower.includes("not liable") ||
-    lower.includes("without liability")
-  ) {
-    if (!bullets.some((b) => b.includes("releasing the company"))) {
-      bullets.push("The company may not be held liable for certain outcomes or damages.");
-    }
-  }
-
-  return bullets;
+  return {
+    bullets: uniqueBullets.slice(0, 7),
+    matchedTriggerPhrases: Array.from(new Set(matchedTriggerPhrases)),
+    score: normalizeScore(score, lower),
+    fallbackBulletsUsed: false,
+    summaryLine: buildClauseSummaryLine(lower, uniqueBullets)
+  };
 }
 
 export function buildFallbackClauseBullets(extractedText: string): string[] {
@@ -379,10 +343,9 @@ function normalizeScore(score: number, lower: string): number {
 
 function buildClauseSummaryLine(lower: string, bullets: string[]): string {
   if (
-    lower.includes("verify") &&
+    lower.includes("statements made by me") &&
     lower.includes("former employers") &&
-    (lower.includes("without giving me prior notice") ||
-      lower.includes("release from any liability"))
+    (lower.includes("without giving me prior notice") || lower.includes("release from any liability"))
   ) {
     return "You are granting broad permission to verify your background, contact outside parties, and act on information you provided.";
   }
@@ -406,8 +369,24 @@ function buildClauseSummaryLine(lower: string, bullets: string[]): string {
     return "You may be agreeing that your personal information can be shared with or sold to third parties.";
   }
 
+  if (
+    lower.includes("irrevocable license") ||
+    lower.includes("perpetual license") ||
+    lower.includes("worldwide license")
+  ) {
+    return "You may be granting the company a permanent license to use content you post or create.";
+  }
+
+  if (lower.includes("terminate your account") || lower.includes("suspend your account")) {
+    return "The company reserves the right to terminate or restrict your account at any time.";
+  }
+
   if (lower.includes("jury trial") || lower.includes("waive any claims")) {
     return "You may be waiving certain legal rights including the right to a jury trial or to bring claims.";
+  }
+
+  if (lower.includes("indemnify") || lower.includes("hold harmless")) {
+    return "You may be agreeing to protect the company from legal claims arising from your use.";
   }
 
   if (bullets.length) {

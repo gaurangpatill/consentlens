@@ -198,6 +198,18 @@ function buildFallbackBullets(analysis: Partial<ConsentAnalysis>): string[] {
   ) {
     bullets.push("Your personal information may be shared with outside parties.");
   }
+  if (
+    categories.has("Content License") ||
+    includesAny(snippets, ["irrevocable license", "perpetual license", "user content", "content you post"])
+  ) {
+    bullets.push("You may be granting the company a broad or permanent license to use your content.");
+  }
+  if (
+    categories.has("Account Control") ||
+    includesAny(snippets, ["terminate your account", "suspend your account", "at our sole discretion"])
+  ) {
+    bullets.push("The company may restrict or terminate your account at any time.");
+  }
 
   if (!bullets.length && extractedTextLength < 100) {
     return ["ConsentLens found agreement language, but the extracted text was too short to summarize safely."];

@@ -40,6 +40,18 @@ const BLOCK_SIGNALS: CategorySignal[] = [
     severity: "medium",
     phrases: ["if hired"],
     explanation: "You may be acknowledging employment terms connected to the agreement."
+  },
+  {
+    category: "Content License",
+    severity: "high",
+    phrases: ["grant us a license", "license to use your", "license to host", "license to store"],
+    explanation: "You may be granting the company a broad license to use content you post."
+  },
+  {
+    category: "Account Control",
+    severity: "medium",
+    phrases: ["modify or terminate", "restrict access", "access may be revoked"],
+    explanation: "The company may restrict or end your access to the service."
   }
 ];
 
@@ -181,8 +193,7 @@ function scoreBlock(
       : 0;
 
   return clampRiskScore(
-    8 +
-      categorySeverityPoints +
+    categorySeverityPoints +
       categoryPoints +
       markerPoints +
       matchPoints +
@@ -203,7 +214,22 @@ function buildSummaryLine(
   const hasEmployment = categories.includes("Employment Terms");
   const hasLegalRights = categories.includes("Legal Rights");
   const hasFinancial = categories.includes("Financial Commitment");
+  const hasContentLicense = categories.includes("Content License");
+  const hasAccountControl = categories.includes("Account Control");
+  const highCount = [hasLegalRights, hasDataSharing, hasContentLicense, hasBackground, hasLiability].filter(Boolean).length;
   const text = input.text.toLowerCase();
+
+  if (highCount >= 3) {
+    return "This agreement covers multiple areas — including your data, rights, and legal options — worth reviewing carefully.";
+  }
+
+  if (hasLegalRights && hasDataSharing) {
+    return "You may be giving up legal rights and agreeing to share your personal information.";
+  }
+
+  if (hasLegalRights && hasFinancial) {
+    return "You may be agreeing to payment terms and giving up your right to dispute them in court.";
+  }
 
   if (hasBackground && hasDataSharing) {
     return "You may be granting broad permission to verify your background and contact outside parties.";
@@ -213,16 +239,32 @@ function buildSummaryLine(
     return "You may be authorizing verification while releasing some parties from verification-related liability.";
   }
 
+  if (hasContentLicense && hasAccountControl) {
+    return "The company may use content you post and can restrict or close your account at any time.";
+  }
+
   if (hasLegalRights) {
-    return "You may be agreeing to limits on how disputes can be handled.";
+    return "You may be agreeing to limits on how disputes can be handled, including waiving your right to sue.";
+  }
+
+  if (hasDataSharing && text.includes("sell")) {
+    return "You may be agreeing that your personal information can be sold or shared with third parties.";
   }
 
   if (hasFinancial) {
     return "You may be agreeing to payment, renewal, refund, or cancellation terms.";
   }
 
+  if (hasContentLicense) {
+    return "You may be granting the company broad rights to use content you post or create.";
+  }
+
+  if (hasAccountControl) {
+    return "The company reserves rights to restrict or close your account at its discretion.";
+  }
+
   if (hasEmployment) {
-    return "You may be acknowledging employment terms that could matter if you are hired.";
+    return "You may be acknowledging employment terms that could affect notice or termination.";
   }
 
   if (hasDataSharing) {

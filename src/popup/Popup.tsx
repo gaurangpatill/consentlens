@@ -135,7 +135,7 @@ function AnalysisView({
 
       {agreementBullets.length > 0 && (
         <>
-      <p className="points-title">You are signing up for:</p>
+      <p className="points-title">What you're agreeing to:</p>
           <ul className="bullet-list">
             {agreementBullets.map((bullet) => (
               <li key={bullet}>{bullet}</li>

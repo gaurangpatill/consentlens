@@ -8,6 +8,8 @@ export type ConsentCategory =
   | "Employment Terms"
   | "Financial Commitment"
   | "Privacy Tracking"
+  | "Content License"
+  | "Account Control"
   | "General Consent";
 
 export type ConsentFinding = {

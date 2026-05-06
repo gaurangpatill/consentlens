@@ -166,6 +166,10 @@ function categoryDescription(category: ConsentCategory): string {
       return "Checks for renewals, recurring charges, refunds, and cancellation terms.";
     case "Privacy Tracking":
       return "Checks for tracking, analytics, advertising, and device identifier language.";
+    case "Content License":
+      return "Checks for irrevocable or perpetual licenses to content you post, create, or submit.";
+    case "Account Control":
+      return "Checks for terms that let the company restrict, suspend, or close your account.";
     case "General Consent":
       return "Checks for broad agreement, acknowledgement, policy, and authorization phrases.";
   }

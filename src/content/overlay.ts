@@ -69,7 +69,7 @@ export class ConsentLensOverlay {
 
     const bullets = document.createElement("ul");
     bullets.className = "bullets";
-    analysis.importantPoints.slice(0, 4).forEach((bulletText) => {
+    analysis.importantPoints.slice(0, 3).forEach((bulletText) => {
       const bullet = document.createElement("li");
       bullet.textContent = bulletText;
       bullets.appendChild(bullet);
@@ -89,7 +89,7 @@ export class ConsentLensOverlay {
     const details = document.createElement("button");
     details.type = "button";
     details.className = "primary";
-    details.textContent = this.expanded ? "Hide" : "Review";
+    details.textContent = this.expanded ? "Hide source" : "View source";
     details.addEventListener("click", () => {
       this.expanded = !this.expanded;
       this.show(analysis, callbacks);
@@ -109,8 +109,11 @@ export class ConsentLensOverlay {
 
     actions.append(details, dismiss, ignore);
     card.append(header, summary, chips);
+    if (bullets.children.length > 0) {
+      card.append(bullets);
+    }
     if (this.expanded) {
-      card.append(bullets, snippets);
+      card.append(snippets);
     }
     card.append(actions);
     return card;
